@@ -1,0 +1,89 @@
+header{
+    padding: 12px;
+    height:4.7vh;
+    display: flex;
+    align-items:middle ;
+    justify-content:space-between;
+    border-bottom: 2px solid #F5F5F5;
+  } 
+  
+  #logo{
+    font-weight: 600;
+    font-size:18px
+    color : #707070;
+    
+  }
+  
+  #sect {
+    padding-top: 5vh;
+    
+    text-align:center;
+    
+  }
+ 
+ .login2{
+   margin-top: 4vh;
+   
+   margin-left:auto;
+   margin-right: auto;
+   
+   width:clamp(85vw, 85vw);
+   
+ }
+ 
+.login2 input[type="text"] , .login2 input[type="password"]{
+   border:1px solid grey;
+   padding-left:20px;
+   border-radius:6px;
+   height:8vh;
+   width:93%;
+   background: inherit;
+   margin-bottom:3vh;
+ }
+ 
+ 
+ #continue{
+   background:#101010;
+   color:white;
+   height:8vh;
+   display:flex;
+   margin-top:0.6vh;
+   align-items: center;
+   justify-content: center;
+   border-radius:6px;
+   width:100%;
+   border:0;
+   outline:none !important;
+ }
+ 
+
+
+#bookieLogo{
+  height:7vh;
+  width:7vh;
+  border-radius :50%;
+  margin-bottom: 3vh;
+}
+
+
+.password-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-container input {
+  width: 100%;
+  padding-right: 40px; /* Space for the icon */
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  margin-top:-15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333;
+  font-size: 1.2em;
+}

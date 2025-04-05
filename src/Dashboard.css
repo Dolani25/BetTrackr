@@ -1,0 +1,139 @@
+/* Created by Dolani */
+
+#Dashboard{
+        padding: 3vmin;
+        margin: 0;
+        -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+        border: none;
+        outline: none;
+        font-family: "Croissant One", sans-serif;
+      
+        height: 100vh;
+        background: #ffffff;
+  max-width: 100vw;
+  overflow-x: hidden;
+}    
+
+.Tabs{
+  margin-top:1.3vh;
+  display : flex;
+  justify-content:space-evenly;
+  align-content:center;
+  padding: .5em .1em .5em .1em;
+  background : #b0b0b0;
+  border-radius:7px;
+ /* overflow-X : auto;*/
+}
+
+.Tab{
+  display:inline;
+  color:#000;
+  height:20px;
+  padding:.5em;
+  font-size:90%;
+  text-align:center;
+  /*background:#101010;*/
+  border-radius:5px;
+}
+    
+      .Balance{
+          background: #283038;
+          height : 7vh;
+          text-align : center;
+          padding : 5vmin;
+          overflow-x : hidden !important;
+          color : #f1f1f1;
+          border-radius:6px;
+    display:flex;
+    flex-direction : column;
+    align-items : center;
+    justify-content: center;
+}
+
+#Dashboard #UserPic{
+  height:8vh;
+  width:8vh;
+  border:2px dashed #f9ec52 ;
+  border-radius: 50%;
+  padding:1px;
+}
+
+#Dashboard .User {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  margin-bottom: 3vh;
+  margin-top: 3vh;
+  width: 100%;
+}
+
+.UserIcon {
+  height: 24px;
+  width: 24px;
+  margin-top:-2vh;
+}
+
+
+.UserText {
+  flex-grow: 1;
+  font-family: "Playfair Display", serif;
+  font-size:20px;
+  font-weight: 500;
+  text-align: left;
+  padding-left: 10px;
+  line-height: 1.4; /* Adjust spacing between lines */
+}
+
+.UserText span {
+  display: block; /* Ensures text breaks into two lines */
+}
+
+
+#Dashboard .Card{
+  border-radius:6px;
+  margin:1.3vh 0px 1.3vh 0px;
+  display: flex;
+  height:10vh;
+  text-transform:uppercase;
+  align-items: center;
+  justify-content: space-between;
+  padding:3vmin;
+  font-family: "Playfair Display" ,serif;
+}
+
+#Dashboard .Card h3{
+  font-size:130%;
+  color:#101010;
+  
+  font-weight: 700;
+}
+
+#Dashboard .Card p{
+  font-size:90%;
+  color:#151413db;
+  color:#fff;
+  font-weight: 600;
+}
+
+#Dashboard .Card:last-of-type , #Dashboard .Card:last-child{
+    margin-bottom: 5vh;
+}
+
+#Dashboard > .Card > .CardIcon{
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:6vh;
+  width:6vh;
+  border-radius:50%;
+}
+
+      
+      .bottom{
+          padding : 15vmin 4.6vmin 22vmin 4.6vmin;
+          background : inherit;
+          height : 66%;
+          overflow-x : hidden !important;
+      }
