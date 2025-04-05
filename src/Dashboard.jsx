@@ -7,26 +7,7 @@ import TimeSeriesChart from "./TimeSeriesChart.jsx"
 
 
 
-import { Tabs, TabList, TabPanels, Tab, TabPanel } from "@chakra-ui/react";
-import { LuFolder, LuSquareCheck, LuUser } from "react-icons/lu";
 
-const DashTab = () => {
-  return (
-    <Tabs variant="enclosed" colorScheme="teal">
-      <TabList>
-        <Tab><LuUser style={{ marginRight: "8px" }} /> Members</Tab>
-        <Tab><LuFolder style={{ marginRight: "8px" }} /> Projects</Tab>
-        <Tab><LuSquareCheck style={{ marginRight: "8px" }} /> Settings</Tab>
-      </TabList>
-
-      <TabPanels>
-        <TabPanel>Manage your team members</TabPanel>
-        <TabPanel>Manage your projects</TabPanel>
-        <TabPanel>Manage your tasks for freelancers</TabPanel>
-      </TabPanels>
-    </Tabs>
-  );
-};
 
 
 import {FaArrowUp , FaPercent,FaHandHoldingUsd,  FaArrowDown,  FaCheck} from "react-icons/fa"
@@ -186,7 +167,7 @@ const Dashboard = () => {
     <div id="Dashboard" >
       <User />
       <Balance />
-      <DashTab/>
+      
       <Card bg="linear-gradient(to right top, #50c9c3, #64cec9, #76d4cf, #86d9d4, #96deda)" action="staked" amount="45195.16" icon={<Coins color="#50c9c3" />} />
       <Card bg="linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)" action="last win"  amount="80672.95" icon={<History color="#fbc2eb" />} />
       <Card bg="radial-gradient(circle 248px at center, #16d9e3 0%, #30c7ec 47%, #46aef7 100%)" action="Withdrawn" amount="29896.04" icon={<Landmark color="#46aef7" />} />
