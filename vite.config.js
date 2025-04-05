@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      // Ensure proper resolution of react-router-dom
-      'react-router-dom': require.resolve('react-router-dom'),
+      // Directly specify the package name
+      'react-router-dom': 'react-router-dom',
     },
   },
 });
