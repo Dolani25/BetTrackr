@@ -6,6 +6,8 @@ import Dashboard from "./Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import { AlertProvider, useAlert } from "./AlertContext";
 
+
+
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 

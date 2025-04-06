@@ -3,6 +3,11 @@ import "./Dashboard.css";
 import UserPic from "/assets/i.jpeg";
 import React from "react";
 import { useState, useEffect } from "react";
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+
 import TimeSeriesChart from "./TimeSeriesChart.jsx"
 
 
@@ -17,6 +22,22 @@ import { Trophy, History, Scale, Calculator, Landmark, Percent, Coins, Scissors 
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip,PieChart, Pie, Cell, Legend, ResponsiveContainer } from 'recharts';
 
 const data = [{name: 'Page A', uv: 400, pv: 2400, amt: 2400}, {name: 'Page B', uv: 200, pv: 1500, amt: 1300}, {name: 'Page C', uv: 300, pv: 1400, amt: 2700}];
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 
 
@@ -111,10 +132,10 @@ const renderLineChart = (
   </div>
 );
 
-  // Format currency To display the Naira symbol (₦) 
+  // Format currency To display the Naira symbol (â‚¦) 
 
 const formatCurrency = (amount) => {
-  return '₦' + new Intl.NumberFormat('en-US', {
+  return 'â‚¦' + new Intl.NumberFormat('en-US', {
     style: 'decimal',
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
@@ -150,11 +171,20 @@ const User = () => (
 
 
 const Dashboard = () => {
-  const [data, setData] = useState([]);
+   const [data, setData] = useState([]);
+   const [value, setValue] = useState('Overview');
 
-  useEffect(() => {
-    setData([
+   const handleChange = (event, newValue) => {
+       setValue(newValue);
+   };
+
+
+   useEffect(() => {
+      setData([
       { timestamp: "2024-03-01", value: 50 },
+
+
+
       { timestamp: "2024-03-02", value: 70 },
       { timestamp: "2024-03-03", value: 30 },
       { timestamp: "2024-03-04", value: 90 },
@@ -167,11 +197,25 @@ const Dashboard = () => {
     <div id="Dashboard" >
       <User />
       <Balance />
+
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+          <Tab value="Overview" label="Overview" />
+          <Tab value="Statistics" label="Statistics" />
+        </Tabs>
+      </Box>
+
+      <TabPanel value={"Overview"} index={"Overview"}>
+        <Typography>Overview content goes here</Typography>
+      </TabPanel>
+      <TabPanel value={"Statistics"} index={"Statistics"}>
+        <Typography>Statistics content goes here</Typography>
+      </TabPanel>
       
       <Card bg="linear-gradient(to right top, #50c9c3, #64cec9, #76d4cf, #86d9d4, #96deda)" action="staked" amount="45195.16" icon={<Coins color="#50c9c3" />} />
       <Card bg="linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)" action="last win"  amount="80672.95" icon={<History color="#fbc2eb" />} />
       <Card bg="radial-gradient(circle 248px at center, #16d9e3 0%, #30c7ec 47%, #46aef7 100%)" action="Withdrawn" amount="29896.04" icon={<Landmark color="#46aef7" />} />
-      <Card bg=" linear-gradient(120deg, #a6c0fe 0%, #f68084 100%)" action="money lost since last win"  amount="36552.23" icon={<Scissors color="#f68084"/>} />
+      <Card bg=" linear-gradient(120deg, #a6c0fe 0%, #f68084 100%)" action="money lost since last win" amount="36552.23" icon={<Scissors color="#f68084"/>} />
 
       <Card bg="linear-gradient(120deg, #f6d365 0%, #fda085 100%)" action="highest amount won"  amount="1562570.75" icon={<Trophy color="#ffd700"/>} />
       
