@@ -10,7 +10,6 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
-        <CssBaseline />
         <App />
       </ThemeProvider>
     </StyledEngineProvider>
