@@ -135,7 +135,7 @@ const renderLineChart = (
   // Format currency To display the Naira symbol (â‚¦) 
 
 const formatCurrency = (amount) => {
-  return 'â‚¦' + new Intl.NumberFormat('en-US', {
+  return '₦' + new Intl.NumberFormat('en-US', {
     style: 'decimal',
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
