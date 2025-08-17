@@ -10,7 +10,9 @@ import Box from '@mui/material/Box';
 
 import TimeSeriesChart from "./TimeSeriesChart.jsx"
 
-
+import OverviewTab from './components/OverviewTab';
+import BettingBehaviorTab from './components/BettingBehaviorTab';
+import PsychologyTab from './components/PsychologyTab';
 
 
 
@@ -30,15 +32,25 @@ function TabPanel(props) {
     <div
       role="tabpanel"
       hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
+      id={`dashboard-tabpanel-${index}`}
+      aria-labelledby={`dashboard-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && (
+        <Box sx={{ p: 0 }}>
+          {children}
+        </Box>
+      )}
     </div>
   );
 }
 
+function a11yProps(index) {
+  return {
+    id: `dashboard-tab-${index}`,
+    'aria-controls': `dashboard-tabpanel-${index}`,
+  };
+}
 
 
 // Data for the donut chart
@@ -56,7 +68,8 @@ const GRADIENT_COLORS = [
 ];
 
 const renderDonutChart = (
-  <div style={{ fontFamily:"Playfair Display" , borderRadius:"6px", width: "100%", maxWidth: "400px", margin: "auto", position: "relative", backgroundImage:"linear-gradient(to right, #4facfe 0%, #00f2fe 100%)" }}>
+  <div id="Donut" style={{ fontFamily:"Playfair Display" , borderRadius:"6px", textTransform:"uppercase" , width: "100%", maxWidth: "2000px", padding:"0vmin", margin: "auto", position: "relative", backgroundImage:"linear-gradient(to right, #4facfe 0%, #00f2fe 100%)" }}>
+          <p>Win/Loss Distribution</p>
     {/* SVG Gradients for Arc Colors */}
     <svg width="0" height="0">
       <defs>
@@ -79,6 +92,7 @@ const renderDonutChart = (
 
     {/* Donut Chart */}
     <ResponsiveContainer width="100%" height={300}>
+
       <PieChart>
         <Pie
           data={donutData}
@@ -198,19 +212,55 @@ const Dashboard = () => {
       <User />
       <Balance />
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-          <Tab value="Overview" label="Overview" />
-          <Tab value="Statistics" label="Statistics" />
+            {/* Navigation Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'white' }}>
+        <Tabs 
+          value={value} 
+          onChange={handleChange} 
+          aria-label="dashboard tabs"
+          sx={{ px: 3 }}
+        >
+          <Tab 
+            label="Overview" 
+            {...a11yProps(0)}
+            sx={{ 
+              textTransform: 'none', 
+              fontSize: '1rem',
+              fontWeight: value === 0 ? 'bold' : 'normal'
+            }}
+          />
+          <Tab 
+            label="Betting Behavior" 
+            {...a11yProps(1)}
+            sx={{ 
+              textTransform: 'none', 
+              fontSize: '1rem',
+              fontWeight: value === 1 ? 'bold' : 'normal'
+            }}
+          />
+          <Tab 
+            label="Psychology" 
+            {...a11yProps(2)}
+            sx={{ 
+              textTransform: 'none', 
+              fontSize: '1rem',
+              fontWeight: value === 2 ? 'bold' : 'normal'
+            }}
+          />
         </Tabs>
       </Box>
 
-      <TabPanel value={"Overview"} index={"Overview"}>
-        <Typography>Overview content goes here</Typography>
+      {/* Tab Content */}
+      <TabPanel value={value} index={0}>
+        <OverviewTab />
       </TabPanel>
-      <TabPanel value={"Statistics"} index={"Statistics"}>
-        <Typography>Statistics content goes here</Typography>
+      <TabPanel value={value} index={1}>
+        <BettingBehaviorTab />
       </TabPanel>
+      <TabPanel value={value} index={2}>
+        <PsychologyTab />
+      </TabPanel>
+    
       
       <Card bg="linear-gradient(to right top, #50c9c3, #64cec9, #76d4cf, #86d9d4, #96deda)" action="staked" amount="45195.16" icon={<Coins color="#50c9c3" />} />
       <Card bg="linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)" action="last win"  amount="80672.95" icon={<History color="#fbc2eb" />} />
