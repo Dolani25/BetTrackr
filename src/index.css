@@ -1,0 +1,45 @@
+:root {
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+body {
+  margin: 0;
+  padding:0;
+}
+        
+
+
+
+body,HTML,*{
+/*disable copy and paste*/
+-webkit-user-select: none;
+ -webkit-touch-callout: none;
+ -moz-user-select: none;
+ -ms-user-select: none; 
+user-select: none;
+text-decoration:none;
+
+}
+
+
+
+
+
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #333; 
+    background-color: #ffffff; 
+  }
+  
+  
+  
+}
