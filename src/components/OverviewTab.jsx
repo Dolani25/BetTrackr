@@ -218,6 +218,7 @@ const OverviewTab = () => {
           </Card>
         </Grid>
 
+        
 
         {/* Bet Amount Distribution */}
         <Grid item xs={12} lg={6}>
@@ -229,7 +230,7 @@ const OverviewTab = () => {
                 title={
                   <Box sx={{ p: 1 }}>
                     <Typography variant="caption" display="block">Histogram of stake counts per range.</Typography>
-                    <BlockMath math={"count(r) = \\sum_i 1\\{ s_i \in r \\}"} />
+                    <BlockMath math={"count(r) = \\sum_i 1\\{ s_i \\in r \\}"} />
                   </Box>
                 }
               >
@@ -287,7 +288,7 @@ const OverviewTab = () => {
           </Card>
         </Grid>
       </Grid>
-
+      
       {/* Dashboard Cards - Original Styling (now with tooltips) */}
       <MuiTooltip
         arrow
@@ -637,4 +638,3 @@ const OverviewTab = () => {
 };
 
 export default OverviewTab;
-

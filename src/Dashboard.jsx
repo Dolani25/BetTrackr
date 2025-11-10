@@ -1,4 +1,3 @@
-
 import "./Dashboard.css";
 import UserPic from "/assets/i.jpeg";
 import React, { useState, useEffect, useMemo } from "react";
@@ -12,9 +11,6 @@ import TimeSeriesChart from "./TimeSeriesChart.jsx"
 import OverviewTab from './components/OverviewTab';
 import BettingBehaviorTab from './components/BettingBehaviorTab';
 import PsychologyTab from './components/PsychologyTab';
-
-
-
 
 import {FaArrowUp , FaPercent,FaHandHoldingUsd,  FaArrowDown,  FaCheck, FaPlus} from "react-icons/fa"
 
@@ -51,15 +47,12 @@ function a11yProps(index) {
   };
 }
 
-
-// Data for the donut chart
 const donutData = [
   { name: "Wins", value: 45 },
   { name: "Losses", value: 30 },
   { name: "Draws", value: 25 },
 ];
 
-// Define gradient colors for the arcs
 const GRADIENT_COLORS = [
   "url(#winGradient)",
   "url(#lossGradient)",
@@ -145,8 +138,6 @@ const renderLineChart = (
   </div>
 );
 
-  // Format currency To display the Naira symbol (â‚¦) 
-
 const formatCurrency = (amount) => {
   return '₦' + new Intl.NumberFormat('en-US', {
     style: 'decimal',
@@ -154,8 +145,6 @@ const formatCurrency = (amount) => {
     minimumFractionDigits: 2,
   }).format(amount);
 };
-
-
 
 const Card = ({ bg ,icon ,action, amount}) => (
   <div style={{ backgroundImage: bg }} className="Card">
@@ -199,7 +188,6 @@ const User = () => (
   </div>
 );
 
-
 const Dashboard = () => {
    const [data, setData] = useState([]);
    const [value, setValue] = useState(0);
@@ -207,7 +195,6 @@ const Dashboard = () => {
    const handleChange = (event, newValue) => {
        setValue(newValue);
    };
-
 
    useEffect(() => {
       setData([
@@ -221,7 +208,6 @@ const Dashboard = () => {
       { timestamp: "2024-03-05", value: 40 }
     ]);
   }, []);
-
 
   return (
     <div id="Dashboard" >

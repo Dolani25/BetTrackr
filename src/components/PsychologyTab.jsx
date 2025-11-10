@@ -212,7 +212,7 @@ const PsychologyTab = () => {
                 title={
                   <Box sx={{ p: 1 }}>
                     <Typography variant="caption" display="block">Detect spikes in activity and stake after losses.</Typography>
-                    <BlockMath math={"z^{(bph)}_t = \\frac{bph_t - \\mu}{\\sigma}, \quad \\Delta s_t = s_t - s_{t-1}"} />
+                    <BlockMath math={"z^{(bph)}_t = \\frac{bph_t - \\mu}{\\sigma}, \\quad \\Delta s_t = s_t - s_{t-1}"} />
                     <Typography variant="caption" display="block">Flag tilt when <InlineMath math={"z^{(bph)}_t > z_*"}/> and <InlineMath math={"\\Delta s_t > 0"}/> following a loss.</Typography>
                   </Box>
                 }
