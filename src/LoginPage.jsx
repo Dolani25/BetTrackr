@@ -1,12 +1,13 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
+import toast from 'react-hot-toast';
 import "./LoginPage.css";
 
 import { FaArrowLeft, FaLock, FaTimes, FaEye, FaEyeSlash } from "react-icons/fa";
 
 import { useAlert } from "./AlertContext";
 
-const LoginPage = ({ setIsAuthenticated }) => {
+const LoginPage = ({ setIsAuthenticated, setActiveBookie }) => {
   const { showAlert } = useAlert();
   const { bookieName } = useParams();
   const location = useLocation();
@@ -39,8 +40,10 @@ const LoginPage = ({ setIsAuthenticated }) => {
       password: credentials.password,
     };
 
+    const toastId = toast.loading('Logging in...');
+
     try {
-      const response = await fetch("http://localhost:5000/login", {
+      const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -50,15 +53,17 @@ const LoginPage = ({ setIsAuthenticated }) => {
       console.log("Login response:", data);
 
       if (data.success) {
+        toast.success("Logged in!", { id: toastId });
         setIsAuthenticated(true); // Mark user as authenticated
+        setActiveBookie(bookie.name); // Store active bookie
         navigate("/dashboard"); // Redirect on success
       } else {
-        alert(data.message || "Invalid credentials!");
+        toast.error(data.message || "Invalid credentials!", { id: toastId });
       }
 
     } catch (error) {
       console.error("Error logging in:", error);
-      alert("Login failed. Try again.");
+      toast.error("Login failed. Try again.", { id: toastId });
     }
   };
 
@@ -68,10 +73,10 @@ const LoginPage = ({ setIsAuthenticated }) => {
         <button className="back-button" onClick={() => navigate(-1)}>
           <FaArrowLeft />
         </button>
-            <div style={{display:"flex" , justifyContent:"center"}} id="logo">
-      <img style={{height:"24px", marginRight:"7px" , width:"24px"}} src="/assets/dice.png" alt="BetTrackr" /> 
-      <h style={{marginTop:"3px"}} >BetTrackr</h>
-    </div>
+        <div style={{ display: "flex", justifyContent: "center" }} id="logo">
+          <img style={{ height: "24px", marginRight: "7px", width: "24px" }} src="/assets/dice.png" alt="BetTrackr" />
+          <h style={{ marginTop: "3px" }} >BetTrackr</h>
+        </div>
         <button className="close-button">
           <FaTimes />
         </button>
@@ -119,7 +124,7 @@ const LoginPage = ({ setIsAuthenticated }) => {
 
             <button id="continue" type="submit">Login</button>
 
-            <p style={{ display:"flex" , justifyContent:"center", fontSize: "70%", marginTop: "1.5vh", color: "#101010" }}>
+            <p style={{ display: "flex", justifyContent: "center", fontSize: "70%", marginTop: "1.5vh", color: "#101010" }}>
               Login secured with trusted technologies &nbsp;
               <FaLock size={15} color="rgba(0,0,0,0.4)" />
             </p>

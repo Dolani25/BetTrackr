@@ -1,0 +1,240 @@
+{
+  "analysis_date": "2025-11-12T21:53:36.711543",
+  "total_bets": 85,
+  "won_bets": 3,
+  "lost_bets": 82,
+  "pending_bets": 0,
+  "cancelled_bets": 0,
+  "stakes_and_returns": {
+    "total_stake": 18151.629999999997,
+    "total_return": 1140.01,
+    "net_profit_loss": -17011.62
+  },
+  "rates": {
+    "win_rate_percent": 3.5294117647058822,
+    "loss_rate_percent": 96.47058823529412,
+    "roi_percent": -93.71951720038366
+  },
+  "averages": {
+    "average_stake": 213.5485882352941,
+    "average_return": 13.411882352941177,
+    "average_win": 380.00333333333333,
+    "average_loss": 213.1296341463415
+  },
+  "date_range": {
+    "earliest_bet": "18/10/2025",
+    "latest_bet": "11/11/2025",
+    "days_span": 24
+  },
+  "greed_index": {
+    "score": 2.3313891154300492,
+    "level": "🟡 MODERATE - Some variance"
+  },
+  "loss_chasing": {
+    "chasing_detected": true,
+    "chasing_events": [
+      {
+        "after_losses": 2,
+        "previous_stake": 100.0,
+        "next_stake": 300.0,
+        "increase_percent": 200.0,
+        "bet_index": 1
+      },
+      {
+        "after_losses": 6,
+        "previous_stake": 10.0,
+        "next_stake": 78.11,
+        "increase_percent": 681.1,
+        "bet_index": 5
+      },
+      {
+        "after_losses": 7,
+        "previous_stake": 78.11,
+        "next_stake": 1101.0,
+        "increase_percent": 1309.5506337216746,
+        "bet_index": 6
+      },
+      {
+        "after_losses": 11,
+        "previous_stake": 10.0,
+        "next_stake": 78.11,
+        "increase_percent": 681.1,
+        "bet_index": 10
+      },
+      {
+        "after_losses": 12,
+        "previous_stake": 78.11,
+        "next_stake": 1101.0,
+        "increase_percent": 1309.5506337216746,
+        "bet_index": 11
+      },
+      {
+        "after_losses": 15,
+        "previous_stake": 90.0,
+        "next_stake": 500.0,
+        "increase_percent": 455.55555555555554,
+        "bet_index": 14
+      },
+      {
+        "after_losses": 19,
+        "previous_stake": 10.0,
+        "next_stake": 350.0,
+        "increase_percent": 3400.0,
+        "bet_index": 18
+      },
+      {
+        "after_losses": 23,
+        "previous_stake": 12.0,
+        "next_stake": 400.0,
+        "increase_percent": 3233.3333333333335,
+        "bet_index": 22
+      },
+      {
+        "after_losses": 26,
+        "previous_stake": 10.0,
+        "next_stake": 50.0,
+        "increase_percent": 400.0,
+        "bet_index": 25
+      },
+      {
+        "after_losses": 29,
+        "previous_stake": 13.0,
+        "next_stake": 500.0,
+        "increase_percent": 3746.153846153846,
+        "bet_index": 28
+      },
+      {
+        "after_losses": 31,
+        "previous_stake": 55.82,
+        "next_stake": 534.41,
+        "increase_percent": 857.3808670727338,
+        "bet_index": 30
+      },
+      {
+        "after_losses": 2,
+        "previous_stake": 25.0,
+        "next_stake": 250.0,
+        "increase_percent": 900.0,
+        "bet_index": 34
+      },
+      {
+        "after_losses": 4,
+        "previous_stake": 200.0,
+        "next_stake": 307.0,
+        "increase_percent": 53.5,
+        "bet_index": 36
+      },
+      {
+        "after_losses": 9,
+        "previous_stake": 100.0,
+        "next_stake": 300.0,
+        "increase_percent": 200.0,
+        "bet_index": 41
+      },
+      {
+        "after_losses": 11,
+        "previous_stake": 100.0,
+        "next_stake": 300.0,
+        "increase_percent": 200.0,
+        "bet_index": 43
+      },
+      {
+        "after_losses": 13,
+        "previous_stake": 100.0,
+        "next_stake": 400.0,
+        "increase_percent": 300.0,
+        "bet_index": 45
+      },
+      {
+        "after_losses": 16,
+        "previous_stake": 50.0,
+        "next_stake": 100.0,
+        "increase_percent": 100.0,
+        "bet_index": 48
+      },
+      {
+        "after_losses": 17,
+        "previous_stake": 100.0,
+        "next_stake": 323.62,
+        "increase_percent": 223.62,
+        "bet_index": 49
+      },
+      {
+        "after_losses": 18,
+        "previous_stake": 323.62,
+        "next_stake": 500.0,
+        "increase_percent": 54.50219393115382,
+        "bet_index": 50
+      },
+      {
+        "after_losses": 26,
+        "previous_stake": 10.0,
+        "next_stake": 400.0,
+        "increase_percent": 3900.0,
+        "bet_index": 58
+      },
+      {
+        "after_losses": 29,
+        "previous_stake": 10.0,
+        "next_stake": 50.0,
+        "increase_percent": 400.0,
+        "bet_index": 61
+      },
+      {
+        "after_losses": 31,
+        "previous_stake": 50.0,
+        "next_stake": 100.0,
+        "increase_percent": 100.0,
+        "bet_index": 63
+      },
+      {
+        "after_losses": 35,
+        "previous_stake": 100.0,
+        "next_stake": 400.0,
+        "increase_percent": 300.0,
+        "bet_index": 67
+      },
+      {
+        "after_losses": 38,
+        "previous_stake": 35.43,
+        "next_stake": 1000.0,
+        "increase_percent": 2722.466836014677,
+        "bet_index": 70
+      },
+      {
+        "after_losses": 1,
+        "previous_stake": 50.0,
+        "next_stake": 700.0,
+        "increase_percent": 1300.0,
+        "bet_index": 75
+      },
+      {
+        "after_losses": 4,
+        "previous_stake": 10.0,
+        "next_stake": 980.0,
+        "increase_percent": 9700.0,
+        "bet_index": 78
+      }
+    ],
+    "total_chasing_events": 26,
+    "severity": "SEVERE"
+  },
+  "bankroll": {
+    "total_staked": 18151.629999999997,
+    "total_returned": 1140.01,
+    "net_profit_loss": -17011.62,
+    "estimated_initial_bankroll": 1000.0,
+    "bankroll_remaining_percent": 6.280482799616344,
+    "daily_burn_rate": 726.0651999999999,
+    "sustainability": "Unsustainable ✗"
+  },
+  "kelly_criterion": {
+    "kelly_fraction": -0.10767084461912643,
+    "kelly_percentage": -10.767084461912644,
+    "average_odds": 7.747848333333334,
+    "win_probability": 3.5294117647058822,
+    "loss_probability": 96.47058823529412,
+    "recommendation": "❌ STOP BETTING - Negative expected value",
+    "expected_value": "Negative"
+  }
+}

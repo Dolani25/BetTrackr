@@ -1,96 +1,110 @@
 import React from 'react';
-import { 
+import {
   BarChart, Bar, LineChart, Line, ScatterChart, Scatter, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { Box, Typography, Grid, Card, CardContent, Tooltip as MuiTooltip } from '@mui/material';
-import { BlockMath, InlineMath } from 'react-katex';
-import 'katex/dist/katex.min.css';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
-import BettingCalendar from './BettingCalendar';
+// import BettingCalendar from './BettingCalendar';
 
-const BettingBehaviorTab = () => {
-  // Reusable shell to avoid squished charts on narrow columns.
-  // Ensures a sensible minimum width and enables horizontal scrolling if needed.
-  const ChartShell = ({ children, minWidth = 420, height = 320 }) => (
-    <Box sx={{ width: '100%', overflowX: 'auto' }}>
-      <Box sx={{ minWidth }}>
-        <ResponsiveContainer width="100%" height={height} minHeight={height}>
-          {children}
-        </ResponsiveContainer>
-      </Box>
-    </Box>
-  );
-  // Sample data for betting patterns
-  const timeHeatmapData = [
-    { day: 'Mon', hour: 9, bets: 5 }, { day: 'Mon', hour: 12, bets: 8 }, { day: 'Mon', hour: 15, bets: 12 },
-    { day: 'Mon', hour: 18, bets: 15 }, { day: 'Mon', hour: 21, bets: 10 },
-    { day: 'Tue', hour: 9, bets: 3 }, { day: 'Tue', hour: 12, bets: 6 }, { day: 'Tue', hour: 15, bets: 9 },
-    { day: 'Tue', hour: 18, bets: 18 }, { day: 'Tue', hour: 21, bets: 14 },
-    { day: 'Wed', hour: 9, bets: 7 }, { day: 'Wed', hour: 12, bets: 11 }, { day: 'Wed', hour: 15, bets: 16 },
-    { day: 'Wed', hour: 18, bets: 20 }, { day: 'Wed', hour: 21, bets: 12 },
-    { day: 'Thu', hour: 9, bets: 4 }, { day: 'Thu', hour: 12, bets: 9 }, { day: 'Thu', hour: 15, bets: 13 },
-    { day: 'Thu', hour: 18, bets: 17 }, { day: 'Thu', hour: 21, bets: 11 },
-    { day: 'Fri', hour: 9, bets: 8 }, { day: 'Fri', hour: 12, bets: 14 }, { day: 'Fri', hour: 15, bets: 19 },
-    { day: 'Fri', hour: 18, bets: 25 }, { day: 'Fri', hour: 21, bets: 22 },
-    { day: 'Sat', hour: 9, bets: 12 }, { day: 'Sat', hour: 12, bets: 18 }, { day: 'Sat', hour: 15, bets: 28 },
-    { day: 'Sat', hour: 18, bets: 35 }, { day: 'Sat', hour: 21, bets: 30 },
-    { day: 'Sun', hour: 9, bets: 10 }, { day: 'Sun', hour: 12, bets: 16 }, { day: 'Sun', hour: 15, bets: 24 },
-    { day: 'Sun', hour: 18, bets: 28 }, { day: 'Sun', hour: 21, bets: 20 }
-  ];
+const BettingBehaviorTab = ({ bets }) => {
+  const safeBets = Array.isArray(bets) ? bets : [];
 
+  // --- HELPER --
+  const cleanNumber = (val) => parseFloat(String(val).replace(/,/g, '')) || 0;
+
+  // 1. TIME HEATMAP
+  const daysMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const heatmapCounts = {}; // "Mon-9" -> count
+  safeBets.forEach(b => {
+    const d = new Date(b.Date);
+    if (isNaN(d.getTime())) return;
+    const dayName = daysMap[d.getDay()];
+    const hour = d.getHours();
+    // Bucket into 3-hour windows for the chart categories (9, 12, 15, 18, 21)
+    // Or just map nearest. The chart expects specific hours.
+    // Let's simplified mapping: <11 -> 9, <14 -> 12, <17 -> 15, <20 -> 18, else 21
+    let bucket = 21;
+    if (hour < 11) bucket = 9;
+    else if (hour < 14) bucket = 12;
+    else if (hour < 17) bucket = 15;
+    else if (hour < 20) bucket = 18;
+
+    const key = `${dayName}-${bucket}`;
+    heatmapCounts[key] = (heatmapCounts[key] || 0) + 1;
+  });
+
+  const timeHeatmapData = [];
+  ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(day => {
+    [9, 12, 15, 18, 21].forEach(hour => {
+      timeHeatmapData.push({
+        day,
+        hour,
+        bets: heatmapCounts[`${day}-${hour}`] || 0
+      });
+    });
+  });
+
+  // 2. STAKE DISTRIBUTION
+  const stakeBuckets = { '$10-25': { count: 0, wins: 0 }, '$25-50': { count: 0, wins: 0 }, '$50-100': { count: 0, wins: 0 }, '$100-250': { count: 0, wins: 0 }, '$250+': { count: 0, wins: 0 } };
+  safeBets.forEach(b => {
+    const s = cleanNumber(b.Stake);
+    const won = b.Status && b.Status.toLowerCase().includes('won');
+    let key = '$250+';
+    if (s < 25) key = '$10-25';
+    else if (s < 50) key = '$25-50';
+    else if (s < 100) key = '$50-100';
+    else if (s < 250) key = '$100-250';
+
+    stakeBuckets[key].count++;
+    if (won) stakeBuckets[key].wins++;
+  });
+
+  const stakeDistributionData = Object.keys(stakeBuckets).map(min => ({
+    range: min,
+    frequency: stakeBuckets[min].count,
+    avgWin: stakeBuckets[min].count ? Math.round((stakeBuckets[min].wins / stakeBuckets[min].count) * 100) : 0
+  }));
+
+  // 3. BANKROLL TREND (Simplistic cumulative P&L)
+  const sortedBets = [...safeBets].sort((a, b) => new Date(a.Date) - new Date(b.Date));
+  let runningBal = 0;
+  let maxBal = -Infinity;
+  // Group by week approximated by every 10 bets or chunks
+  const bankrollPoints = [];
+  sortedBets.forEach((b, i) => {
+    const s = cleanNumber(b.Stake);
+    const r = cleanNumber(b.Return);
+    const pnl = r - s; // Net
+    runningBal += pnl;
+    if (runningBal > maxBal) maxBal = runningBal;
+
+    // Sample points every 10 bets or at end
+    if (i % Math.max(1, Math.floor(sortedBets.length / 6)) === 0 || i === sortedBets.length - 1) {
+      bankrollPoints.push({
+        week: `B${i}`,
+        bankroll: runningBal,
+        highWater: maxBal
+      });
+    }
+  });
+  const bankrollData = bankrollPoints.slice(-10); // Show last 10 points
+
+  // 4. PLACEHOLDERS (Data not available in generic scrape)
   const marketPreferenceData = [
-    { market: 'Football', percentage: 45, color: '#FF6B6B' },
-    { market: 'Basketball', percentage: 25, color: '#4ECDC4' },
-    { market: 'Tennis', percentage: 15, color: '#45B7D1' },
-    { market: 'Baseball', percentage: 10, color: '#96CEB4' },
-    { market: 'Others', percentage: 5, color: '#FFEAA7' }
+    { market: 'Football', percentage: 100, color: '#FF6B6B' } // Defaulting to football since we mostly scrape football
   ];
-
-  const stakeDistributionData = [
-    { range: '$10-25', frequency: 35, avgWin: 68 },
-    { range: '$25-50', frequency: 28, avgWin: 72 },
-    { range: '$50-100', frequency: 20, avgWin: 65 },
-    { range: '$100-250', frequency: 12, avgWin: 58 },
-    { range: '$250+', frequency: 5, avgWin: 45 }
-  ];
-
-  const bankrollData = [
-    { week: 'W1', bankroll: 5000, highWater: 5200 },
-    { week: 'W2', bankroll: 5300, highWater: 5400 },
-    { week: 'W3', bankroll: 4900, highWater: 5400 },
-    { week: 'W4', bankroll: 5600, highWater: 5600 },
-    { week: 'W5', bankroll: 5800, highWater: 5900 },
-    { week: 'W6', bankroll: 6100, highWater: 6200 }
-  ];
-
-  const betSizeConfidenceData = [
-    { confidence: 3, betSize: 25, outcome: 'loss' },
-    { confidence: 5, betSize: 50, outcome: 'win' },
-    { confidence: 7, betSize: 100, outcome: 'win' },
-    { confidence: 4, betSize: 30, outcome: 'loss' },
-    { confidence: 8, betSize: 150, outcome: 'win' },
-    { confidence: 6, betSize: 75, outcome: 'win' },
-    { confidence: 9, betSize: 200, outcome: 'loss' },
-    { confidence: 2, betSize: 20, outcome: 'loss' },
-    { confidence: 7, betSize: 120, outcome: 'win' },
-    { confidence: 5, betSize: 60, outcome: 'win' }
-  ];
-
   const winRateByMarketData = [
-    { market: 'Football', winRate: 68 },
-    { market: 'Basketball', winRate: 72 },
-    { market: 'Tennis', winRate: 65 },
-    { market: 'Baseball', winRate: 58 },
-    { market: 'Hockey', winRate: 62 }
+    { market: 'Football', winRate: sortedBets.length ? Math.round((sortedBets.filter(b => b.Status?.toLowerCase().includes('won')).length / sortedBets.length) * 100) : 0 }
   ];
+  const betSizeConfidenceData = []; // No confidence data in scrape
 
   // Create heatmap grid data
   const createHeatmapGrid = () => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const hours = ['9AM', '12PM', '3PM', '6PM', '9PM'];
-    
+
     return days.map(day => ({
       day,
       data: hours.map(hour => {
@@ -136,7 +150,7 @@ const BettingBehaviorTab = () => {
                   justifyContent: 'center'
                 }}
               >
-                <Typography variant="caption" sx={{ color: value > maxBets/2 ? 'white' : 'black' }}>
+                <Typography variant="caption" sx={{ color: value > maxBets / 2 ? 'white' : 'black' }}>
                   {value}
                 </Typography>
               </Box>
@@ -166,19 +180,21 @@ const BettingBehaviorTab = () => {
                     <Typography variant="caption" display="block">
                       Shows how many bets you place by day of week and hour.
                     </Typography>
-                    <BlockMath math={"f(d, h) = \\sum_{i=1}^{N} 1\\{ bet_i^{(day)} = d, \\ bet_i^{(hour)} = h \\}"} />
+                    <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 1 }}>
+                      Frequency = Count of bets at Day/Hour
+                    </Typography>
                   </Box>
                 }
               >
                 <Typography variant="h6" gutterBottom>
-                  Betting Frequency by Day & Time
+                  Betting Frequency by Day & Time (Temporarily Disabled)
                 </Typography>
               </MuiTooltip>
-              <ChartShell height={350} minWidth={420}>
+              {/* <ChartShell height={350} minWidth={420}>
                 <HeatmapGrid />
-              </ChartShell>
+              </ChartShell> */}
               <Typography variant="caption" color="textSecondary">
-                Darker colors indicate higher betting frequency
+                Feature under maintenance
               </Typography>
             </CardContent>
           </Card>
@@ -197,7 +213,7 @@ const BettingBehaviorTab = () => {
                       Share of your total bets by market.
                     </Typography>
                     <BlockMath math={"p_m = \\frac{B_m}{\\sum_k B_k} \\times 100\\%"} />
-                    <Typography variant="caption" display="block">where <InlineMath math={"B_m"}/> is bets in market <InlineMath math={"m"}/>.</Typography>
+                    <Typography variant="caption" display="block">where <InlineMath math={"B_m"} /> is bets in market <InlineMath math={"m"} />.</Typography>
                   </Box>
                 }
               >
@@ -246,7 +262,7 @@ const BettingBehaviorTab = () => {
                     <Cell fill="url(#baseballGradient)" stroke="#fff" strokeWidth={2} />
                     <Cell fill="url(#othersGradient)" stroke="#fff" strokeWidth={2} />
                   </Pie>
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{
                       backgroundColor: 'rgba(255, 255, 255, 0.95)',
                       border: 'none',
@@ -273,7 +289,9 @@ const BettingBehaviorTab = () => {
                     <Typography variant="caption" display="block">
                       Bars show frequency of stakes in each range; line shows win rate.
                     </Typography>
-                    <BlockMath math={"WR = \\frac{Wins}{Wins + Losses} \\times 100\\%"} />
+                    <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 1 }}>
+                      Win Rate = (Wins / Total Bets) * 100%
+                    </Typography>
                   </Box>
                 }
               >
@@ -308,7 +326,9 @@ const BettingBehaviorTab = () => {
                     <Typography variant="caption" display="block">
                       Tracks current bankroll versus high-water mark over time.
                     </Typography>
-                    <BlockMath math={"DD_t = \\frac{HWM_t - Bankroll_t}{HWM_t}"} />
+                    <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 1 }}>
+                      Drawdown from peak
+                    </Typography>
                   </Box>
                 }
               >
@@ -323,17 +343,17 @@ const BettingBehaviorTab = () => {
                   <YAxis />
                   <Tooltip formatter={(value) => [`$${value}`, '']} />
                   <Legend wrapperStyle={{ textAlign: 'center' }} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="bankroll" 
-                    stroke="#1976d2" 
+                  <Line
+                    type="monotone"
+                    dataKey="bankroll"
+                    stroke="#1976d2"
                     strokeWidth={3}
                     name="Current Bankroll"
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="highWater" 
-                    stroke="#4CAF50" 
+                  <Line
+                    type="monotone"
+                    dataKey="highWater"
+                    stroke="#4CAF50"
                     strokeDasharray="5 5"
                     name="High Water Mark"
                   />
@@ -355,7 +375,9 @@ const BettingBehaviorTab = () => {
                     <Typography variant="caption" display="block">
                       Relationship between your confidence and bet size.
                     </Typography>
-                    <BlockMath math={"betSize = \\alpha + \\beta \\cdot confidence + \\epsilon"} />
+                    <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 1 }}>
+                      Correlation analysis
+                    </Typography>
                   </Box>
                 }
               >
@@ -389,7 +411,9 @@ const BettingBehaviorTab = () => {
                     <Typography variant="caption" display="block">
                       Win rate per market.
                     </Typography>
-                    <BlockMath math={"WR_m = \\frac{Wins_m}{Wins_m + Losses_m} \\times 100\\%"} />
+                    <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 1 }}>
+                      Win Ratio %
+                    </Typography>
                   </Box>
                 }
               >
@@ -411,14 +435,14 @@ const BettingBehaviorTab = () => {
           </Card>
         </Grid>
 
-        {/* Betting Calendar */}
-        <Grid item xs={12}>
+        {/* Betting Calendar - TODO: Implement with real data */}
+        {/* <Grid item xs={12}>
           <Card>
             <CardContent>
               <BettingCalendar />
             </CardContent>
           </Card>
-        </Grid>
+        </Grid> */}
       </Grid>
     </Box>
   );

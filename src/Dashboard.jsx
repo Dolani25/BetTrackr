@@ -11,14 +11,15 @@ import TimeSeriesChart from "./TimeSeriesChart.jsx"
 import OverviewTab from './components/OverviewTab';
 import BettingBehaviorTab from './components/BettingBehaviorTab';
 import PsychologyTab from './components/PsychologyTab';
+import toast from 'react-hot-toast';
 
-import {FaArrowUp , FaPercent,FaHandHoldingUsd,  FaArrowDown,  FaCheck, FaPlus} from "react-icons/fa"
+import { FaArrowUp, FaPercent, FaHandHoldingUsd, FaArrowDown, FaCheck, FaPlus } from "react-icons/fa"
 
 import { Trophy, History, Scale, Calculator, Landmark, Percent, Coins, Scissors } from 'lucide-react';
 
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip,PieChart, Pie, Cell, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend, ResponsiveContainer } from 'recharts';
 
-const data = [{name: 'Page A', uv: 400, pv: 2400, amt: 2400}, {name: 'Page B', uv: 200, pv: 1500, amt: 1300}, {name: 'Page C', uv: 300, pv: 1400, amt: 2700}];
+const data = [{ name: 'Page A', uv: 400, pv: 2400, amt: 2400 }, { name: 'Page B', uv: 200, pv: 1500, amt: 1300 }, { name: 'Page C', uv: 300, pv: 1400, amt: 2700 }];
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -60,8 +61,8 @@ const GRADIENT_COLORS = [
 ];
 
 const renderDonutChart = (
-  <div id="Donut" style={{ fontFamily:"Playfair Display" , borderRadius:"6px", textTransform:"uppercase" , width: "100%", maxWidth: "2000px", padding:"0vmin", margin: "auto", position: "relative", backgroundImage:"linear-gradient(to right, #4facfe 0%, #00f2fe 100%)" }}>
-          <p>Win/Loss Distribution</p>
+  <div id="Donut" style={{ fontFamily: "Playfair Display", borderRadius: "6px", textTransform: "uppercase", width: "100%", maxWidth: "2000px", padding: "0vmin", margin: "auto", position: "relative", backgroundImage: "linear-gradient(to right, #4facfe 0%, #00f2fe 100%)" }}>
+    <p>Win/Loss Distribution</p>
     {/* SVG Gradients for Arc Colors */}
     <svg width="0" height="0">
       <defs>
@@ -115,7 +116,7 @@ const renderDonutChart = (
         textAlign: "center",
         fontWeight: "bold",
         fontSize: "16px",
-        textTransform:"uppercase",
+        textTransform: "uppercase",
         color: "#333",
       }}
     >
@@ -126,9 +127,9 @@ const renderDonutChart = (
 );
 
 const renderLineChart = (
-  <div style={{ marginBottom:"3vmin", fontFamily:"Playfair Display" , paddingTop:"3vmin" , borderRadius:"6px", backgroundImage:"linear-gradient(to top, #0ba360 0%, #3cba92 100%)" , height:"35vh", width: "100%", maxWidth: "100vw", overflowX: "auto" }}>
-    <p style={{ marginBottom:"5vmin" ,marginLeft:"4vmin" ,fontWeight:"600", color:"#fff", fontSize:"", textTransform:"uppercase"}}> Chart</p>
-    <LineChart style={{fontFamily:"Playfair Display"}} width={window.innerWidth * 0.9} height={200} data={data}>
+  <div style={{ marginBottom: "3vmin", fontFamily: "Playfair Display", paddingTop: "3vmin", borderRadius: "6px", backgroundImage: "linear-gradient(to top, #0ba360 0%, #3cba92 100%)", height: "35vh", width: "100%", maxWidth: "100vw", overflowX: "auto" }}>
+    <p style={{ marginBottom: "5vmin", marginLeft: "4vmin", fontWeight: "600", color: "#fff", fontSize: "", textTransform: "uppercase" }}> Chart</p>
+    <LineChart style={{ fontFamily: "Playfair Display" }} width={window.innerWidth * 0.9} height={200} data={data}>
       <Line type="monotone" dataKey="uv" stroke="#8884d8" />
       <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
       <XAxis dataKey="name" />
@@ -146,13 +147,13 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-const Card = ({ bg ,icon ,action, amount}) => (
+const Card = ({ bg, icon, action, amount }) => (
   <div style={{ backgroundImage: bg }} className="Card">
     <span>
-    <p>{action}</p>
-    <h3>{formatCurrency(amount)}</h3>
+      <p>{action}</p>
+      <h3>{formatCurrency(amount)}</h3>
     </span>
-        <div className="CardIcon">{icon}</div>
+    <div className="CardIcon">{icon}</div>
   </div>
 );
 
@@ -183,73 +184,106 @@ const User = () => (
         <FaPlus style={{ fontSize: "10px", color: "#f1f1f1" }} />
       </div>
     </div>
-    <p className="UserText"><span>What's Up,</span><span style={{fontWeight:"600"}} > Dolani</span></p>
+    <p className="UserText"><span>What's Up,</span><span style={{ fontWeight: "600" }} > Dolani</span></p>
     <img className="UserIcon" src="./assets/dice.png" alt="BetTrackr Logo" />
   </div>
 );
 
-const Dashboard = () => {
-   const [data, setData] = useState([]);
-   const [value, setValue] = useState(0);
+const Dashboard = ({ activeBookie }) => {
+  const [data, setData] = useState([]);
+  const [rawBets, setRawBets] = useState([]);
+  const [value, setValue] = useState(0);
 
-   const handleChange = (event, newValue) => {
-       setValue(newValue);
-   };
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
 
-   useEffect(() => {
-      setData([
-      { timestamp: "2024-03-01", value: 50 },
+  useEffect(() => {
+    // Fetch betting data
+    const fetchData = async () => {
+      const toastId = toast.loading('Syncing bets...');
+      try {
+        const response = await fetch(`/api/bets/${activeBookie || 'sportybet'}`);
+        const result = await response.json();
 
+        if (result.success && result.data) {
+          // Process data for the chart (filtering for wins/losses over time)
+          const processedData = processChartData(result.data);
+          setData(processedData);
+          setRawBets(result.data); // Store raw bets
+          toast.success('Sync complete!', { id: toastId });
+        } else {
+          toast.error('No bets found', { id: toastId });
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        toast.error('Sync failed', { id: toastId });
+      }
+    };
 
-
-      { timestamp: "2024-03-02", value: 70 },
-      { timestamp: "2024-03-03", value: 30 },
-      { timestamp: "2024-03-04", value: 90 },
-      { timestamp: "2024-03-05", value: 40 }
-    ]);
+    fetchData();
   }, []);
+
+  const processChartData = (bets) => {
+    // Helper to group bets by date and sum stakes/returns
+    // This is a simple aggregation for the demo
+    const grouped = {};
+    bets.slice(0, 50).forEach(bet => { // Limit to 50 for performance
+      const date = new Date(bet.Date).toISOString().split('T')[0];
+      if (!grouped[date]) grouped[date] = 0;
+      // Example metric: net profit/loss
+      const stake = parseFloat(bet.Stake) || 0;
+      const returns = parseFloat(bet.Return) || 0;
+      grouped[date] += (returns - stake);
+    });
+
+    return Object.keys(grouped).map(date => ({
+      timestamp: date,
+      value: grouped[date]
+    })).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  };
 
   return (
     <div id="Dashboard" >
       <User />
       <Balance />
 
-            {/* Navigation Tabs */}
+      {/* Navigation Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'white' }}>
-        <Tabs 
-          value={value} 
-          onChange={handleChange} 
+        <Tabs
+          value={value}
+          onChange={handleChange}
           aria-label="dashboard tabs"
-          sx={{ 
+          sx={{
             px: 3,
             '& .MuiTabs-flexContainer': {
               justifyContent: 'space-evenly'
             }
           }}
         >
-          <Tab 
-            label="Overview" 
+          <Tab
+            label="Overview"
             value={0}
-            sx={{ 
-              textTransform: 'none', 
+            sx={{
+              textTransform: 'none',
               fontSize: '1rem',
               fontWeight: value === 0 ? 'bold' : 'normal'
             }}
           />
-          <Tab 
-            label="Betting Behavior" 
+          <Tab
+            label="Betting Behavior"
             value={1}
-            sx={{ 
-              textTransform: 'none', 
+            sx={{
+              textTransform: 'none',
               fontSize: '1rem',
-        fontWeight: value === 1 ? 'bold' : 'normal'
+              fontWeight: value === 1 ? 'bold' : 'normal'
             }}
           />
-          <Tab 
-            label="Psychology" 
+          <Tab
+            label="Psychology"
             value={2}
-            sx={{ 
-              textTransform: 'none', 
+            sx={{
+              textTransform: 'none',
               fontSize: '1rem',
               fontWeight: value === 2 ? 'bold' : 'normal'
             }}
@@ -259,16 +293,16 @@ const Dashboard = () => {
 
       {/* Tab Content */}
       <TabPanel value={value} index={0}>
-        {value === 0 && <OverviewTab />}
+        {value === 0 && <OverviewTab bets={rawBets} />}
       </TabPanel>
       <TabPanel value={value} index={1}>
-        {value === 1 && <BettingBehaviorTab />}
+        {value === 1 && <BettingBehaviorTab bets={rawBets} />}
       </TabPanel>
       <TabPanel value={value} index={2}>
-        {value === 2 && <PsychologyTab />}
+        {value === 2 && <PsychologyTab bets={rawBets} />}
       </TabPanel>
-    
-      
+
+
     </div>
   );
 };

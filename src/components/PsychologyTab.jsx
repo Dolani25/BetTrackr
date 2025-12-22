@@ -1,5 +1,5 @@
 import React from 'react';
-import { 
+import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter
 } from 'recharts';
@@ -8,54 +8,81 @@ import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { Brain, TrendingDown, AlertTriangle, Target, Zap, Shield } from 'lucide-react';
 
-const PsychologyTab = () => {
-  // Sample data for psychological analysis
-  const tiltDetectionData = [
-    { date: '2025-01-01', betsPerHour: 2, avgStake: 50, emotionalState: 'calm' },
-    { date: '2025-01-02', betsPerHour: 3, avgStake: 75, emotionalState: 'confident' },
-    { date: '2025-01-03', betsPerHour: 8, avgStake: 150, emotionalState: 'tilted' },
-    { date: '2025-01-04', betsPerHour: 12, avgStake: 200, emotionalState: 'tilted' },
-    { date: '2025-01-05', betsPerHour: 4, avgStake: 60, emotionalState: 'recovering' },
-    { date: '2025-01-06', betsPerHour: 2, avgStake: 45, emotionalState: 'calm' }
-  ];
+const PsychologyTab = ({ bets = [] }) => {
+  // --- HELPER FUNCTIONS ---
+  const cleanNumber = (val) => parseFloat(String(val).replace(/,/g, '')) || 0;
 
-  const revengeBettingData = [
-    { session: 'Session 1', initialLoss: -100, subsequentBets: 3, totalLoss: -250 },
-    { session: 'Session 2', initialLoss: -50, subsequentBets: 1, totalLoss: -75 },
-    { session: 'Session 3', initialLoss: -200, subsequentBets: 6, totalLoss: -500 },
-    { session: 'Session 4', initialLoss: -75, subsequentBets: 2, totalLoss: -125 },
-    { session: 'Session 5', initialLoss: -150, subsequentBets: 4, totalLoss: -300 }
-  ];
+  // 1. TILT DETECTION (Activity per Day)
+  const betsByDate = {};
+  bets.forEach(b => {
+    const d = new Date(b.Date).toISOString().split('T')[0];
+    if (!betsByDate[d]) betsByDate[d] = { count: 0, totalStake: 0 };
+    betsByDate[d].count++;
+    betsByDate[d].totalStake += cleanNumber(b.Stake);
+  });
 
-  const confidenceOutcomeData = [
-    { confidence: 3, outcome: 0, betSize: 25 },
-    { confidence: 5, outcome: 1, betSize: 50 },
-    { confidence: 7, outcome: 1, betSize: 100 },
-    { confidence: 4, outcome: 0, betSize: 30 },
-    { confidence: 8, outcome: 0, betSize: 150 },
-    { confidence: 6, outcome: 1, betSize: 75 },
-    { confidence: 9, outcome: 0, betSize: 200 },
-    { confidence: 2, outcome: 0, betSize: 20 },
-    { confidence: 7, outcome: 1, betSize: 120 },
-    { confidence: 5, outcome: 1, betSize: 60 }
-  ];
+  const tiltDetectionData = Object.keys(betsByDate).sort().slice(-10).map(d => ({
+    date: d,
+    betsPerHour: betsByDate[d].count, // Using Count per Day as proxy for density
+    avgStake: Math.round(betsByDate[d].totalStake / betsByDate[d].count),
+    emotionalState: betsByDate[d].count > 10 ? 'Tilted' : 'Calm'
+  }));
 
-  const emotionalStateData = [
-    { state: 'Confident', winRate: 75, avgStake: 120, frequency: 25 },
-    { state: 'Calm', winRate: 68, avgStake: 80, frequency: 40 },
-    { state: 'Anxious', winRate: 45, avgStake: 60, frequency: 15 },
-    { state: 'Tilted', winRate: 25, avgStake: 180, frequency: 10 },
-    { state: 'Euphoric', winRate: 40, avgStake: 200, frequency: 10 }
-  ];
+  // 2. OVERCONFIDENCE (Bet Size after Win Streak)
+  // We need to iterate chronologically
+  const sortedBets = [...bets].sort((a, b) => new Date(a.Date) - new Date(b.Date));
 
-  const behavioralBiasData = [
-    { bias: 'Overconfidence', severity: 7, impact: 'High', description: 'Betting larger after wins' },
-    { bias: 'Loss Aversion', severity: 5, impact: 'Medium', description: 'Avoiding profitable bets after losses' },
-    { bias: 'Anchoring', severity: 6, impact: 'Medium', description: 'Sticking to familiar odds ranges' },
-    { bias: 'Confirmation', severity: 4, impact: 'Low', description: 'Seeking supporting information' },
-    { bias: 'Gambler\'s Fallacy', severity: 3, impact: 'Low', description: 'Expecting pattern reversals' }
-  ];
+  const streakData = {}; // streak_length -> { totalNextStake, count }
+  let currentStreak = 0;
 
+  for (let i = 0; i < sortedBets.length - 1; i++) {
+    const isWin = sortedBets[i].Status && sortedBets[i].Status.toLowerCase().includes('won');
+
+    if (isWin) {
+      currentStreak++;
+    } else {
+      currentStreak = 0;
+    }
+
+    // Look at next bet
+    const nextBetStake = cleanNumber(sortedBets[i + 1].Stake);
+
+    if (currentStreak > 0) {
+      if (!streakData[currentStreak]) streakData[currentStreak] = { sum: 0, count: 0 };
+      streakData[currentStreak].sum += nextBetStake;
+      streakData[currentStreak].count++;
+    }
+  }
+
+  const overconfidenceData = Object.keys(streakData).map(k => ({
+    streak: parseInt(k),
+    avgBetSize: Math.round(streakData[k].sum / streakData[k].count)
+  })).sort((a, b) => a.streak - b.streak).slice(0, 10); // Limit to top streaks
+
+  // 3. REVENGE BETTING (Loss -> Next Bet Size)
+  const lossData = [];
+  for (let i = 0; i < sortedBets.length - 1; i++) {
+    const isLoss = sortedBets[i].Status && sortedBets[i].Status.toLowerCase().includes('lost');
+    if (isLoss) {
+      const lossAmount = cleanNumber(sortedBets[i].Stake);
+      const nextStake = cleanNumber(sortedBets[i + 1].Stake);
+      // If next stake is > 1.5x previous loss, flagging as potential revenge/chasing
+      if (nextStake > lossAmount * 1.5) {
+        lossData.push({
+          session: `Bet ${i}`,
+          initialLoss: -lossAmount,
+          subsequentBets: 1, // simplified
+          totalLoss: -nextStake // simplified visualization
+        });
+      }
+    }
+  }
+  const revengeBettingData = lossData.slice(-5); // Last 5 detected instances
+
+  // 4. METRICS
+  const tiltRisk = tiltDetectionData.some(d => d.betsPerHour > 15) ? "High" : "Low";
+
+  // Simple placeholders relying on stats
   const disciplineMetrics = [
     { metric: 'Bankroll Management', score: 85 },
     { metric: 'Bet Sizing Consistency', score: 72 },
@@ -65,14 +92,12 @@ const PsychologyTab = () => {
     { metric: 'Rule Adherence', score: 75 }
   ];
 
-  const overconfidenceData = [
-    { streak: 0, avgBetSize: 50 },
-    { streak: 1, avgBetSize: 55 },
-    { streak: 2, avgBetSize: 65 },
-    { streak: 3, avgBetSize: 80 },
-    { streak: 4, avgBetSize: 100 },
-    { streak: 5, avgBetSize: 125 },
-    { streak: 6, avgBetSize: 150 }
+  // Placeholder for unavailable inferred data
+  const confidenceOutcomeData = [];
+  const emotionalStateData = [];
+  const behavioralBiasData = [
+    { bias: 'Overconfidence', severity: overconfidenceData.length > 3 ? 8 : 3, impact: 'High', description: 'Betting larger after wins' },
+    { bias: 'Chasing Losses', severity: revengeBettingData.length > 2 ? 9 : 2, impact: 'High', description: 'Increasing stake after loss' }
   ];
 
   const PsychologyMetricCard = ({ title, value, icon: Icon, color, description }) => (
@@ -89,7 +114,7 @@ const PsychologyTab = () => {
                   <>
                     <Typography variant="caption" display="block">Probability of emotional overbetting.</Typography>
                     <BlockMath math={"z_t = \\frac{bph_t - \\mu_{bph}}{\\sigma_{bph}}"} />
-                    <Typography variant="caption" display="block">High risk when <InlineMath math={"z_t"}/> exceeds threshold.</Typography>
+                    <Typography variant="caption" display="block">High risk when <InlineMath math={"z_t"} /> exceeds threshold.</Typography>
                   </>
                 )}
                 {title === 'Discipline Score' && (
@@ -134,8 +159,8 @@ const PsychologyTab = () => {
         <CardContent>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
             <Typography variant="h6">{bias}</Typography>
-            <Chip 
-              label={impact} 
+            <Chip
+              label={impact}
               color={impact === 'High' ? 'error' : impact === 'Medium' ? 'warning' : 'success'}
               size="small"
             />
@@ -147,16 +172,16 @@ const PsychologyTab = () => {
             <Typography variant="body2" sx={{ minWidth: 80 }}>
               Severity: {severity}/10
             </Typography>
-            <LinearProgress 
-              variant="determinate" 
-              value={severity * 10} 
-              sx={{ 
-                flexGrow: 1, 
+            <LinearProgress
+              variant="determinate"
+              value={severity * 10}
+              sx={{
+                flexGrow: 1,
                 ml: 2,
                 '& .MuiLinearProgress-bar': {
                   backgroundColor: getColor(severity)
                 }
-              }} 
+              }}
             />
           </Box>
         </CardContent>
@@ -173,28 +198,28 @@ const PsychologyTab = () => {
       {/* Psychology Metrics Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={4}>
-          <PsychologyMetricCard 
-            title="Tilt Risk" 
-            value="Medium" 
-            icon={AlertTriangle} 
+          <PsychologyMetricCard
+            title="Tilt Risk"
+            value={tiltRisk}
+            icon={AlertTriangle}
             color="#FF9800"
             description="Based on betting frequency spikes"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <PsychologyMetricCard 
-            title="Discipline Score" 
-            value="76/100" 
-            icon={Shield} 
+          <PsychologyMetricCard
+            title="Discipline Score"
+            value="76/100"
+            icon={Shield}
             color="#4CAF50"
             description="Overall rule adherence rating"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <PsychologyMetricCard 
-            title="Emotional Control" 
-            value="68%" 
-            icon={Brain} 
+          <PsychologyMetricCard
+            title="Emotional Control"
+            value="68%"
+            icon={Brain}
             color="#1976d2"
             description="Consistency in decision making"
           />
@@ -213,7 +238,7 @@ const PsychologyTab = () => {
                   <Box sx={{ p: 1 }}>
                     <Typography variant="caption" display="block">Detect spikes in activity and stake after losses.</Typography>
                     <BlockMath math={"z^{(bph)}_t = \\frac{bph_t - \\mu}{\\sigma}, \\quad \\Delta s_t = s_t - s_{t-1}"} />
-                    <Typography variant="caption" display="block">Flag tilt when <InlineMath math={"z^{(bph)}_t > z_*"}/> and <InlineMath math={"\\Delta s_t > 0"}/> following a loss.</Typography>
+                    <Typography variant="caption" display="block">Flag tilt when <InlineMath math={"z^{(bph)}_t > z_*"} /> and <InlineMath math={"\\Delta s_t > 0"} /> following a loss.</Typography>
                   </Box>
                 }
               >
@@ -229,21 +254,21 @@ const PsychologyTab = () => {
                   <YAxis yAxisId="right" orientation="right" />
                   <Tooltip />
                   <Legend />
-                  <Area 
+                  <Area
                     yAxisId="left"
-                    type="monotone" 
-                    dataKey="betsPerHour" 
+                    type="monotone"
+                    dataKey="betsPerHour"
                     stackId="1"
-                    stroke="#FF6B6B" 
-                    fill="#FF6B6B" 
+                    stroke="#FF6B6B"
+                    fill="#FF6B6B"
                     fillOpacity={0.6}
                     name="Bets per Hour"
                   />
-                  <Line 
+                  <Line
                     yAxisId="right"
-                    type="monotone" 
-                    dataKey="avgStake" 
-                    stroke="#4ECDC4" 
+                    type="monotone"
+                    dataKey="avgStake"
+                    stroke="#4ECDC4"
                     strokeWidth={3}
                     name="Avg Stake ($)"
                   />
@@ -276,11 +301,11 @@ const PsychologyTab = () => {
                   <PolarGrid />
                   <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10 }} />
                   <PolarRadiusAxis domain={[0, 100]} tick={false} />
-                  <Radar 
-                    name="Score" 
-                    dataKey="score" 
-                    stroke="#8884d8" 
-                    fill="#8884d8" 
+                  <Radar
+                    name="Score"
+                    dataKey="score"
+                    stroke="#8884d8"
+                    fill="#8884d8"
                     fillOpacity={0.3}
                   />
                   <Tooltip />
@@ -346,15 +371,15 @@ const PsychologyTab = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="confidence" name="Confidence" unit="/10" />
                   <YAxis dataKey="outcome" name="Outcome" domain={[0, 1]} />
-                  <Tooltip 
+                  <Tooltip
                     cursor={{ strokeDasharray: '3 3' }}
                     formatter={(value, name) => [
                       name === 'outcome' ? (value ? 'Win' : 'Loss') : value,
                       name === 'confidence' ? 'Confidence Level' : name
                     ]}
                   />
-                  <Scatter 
-                    dataKey="outcome" 
+                  <Scatter
+                    dataKey="outcome"
                     fill="#8884d8"
                   />
                 </ScatterChart>
@@ -387,10 +412,10 @@ const PsychologyTab = () => {
                   <XAxis dataKey="streak" name="Win Streak" />
                   <YAxis />
                   <Tooltip formatter={(value) => [`$${value}`, 'Avg Bet Size']} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="avgBetSize" 
-                    stroke="#FF6B6B" 
+                  <Line
+                    type="monotone"
+                    dataKey="avgBetSize"
+                    stroke="#FF6B6B"
                     strokeWidth={3}
                     dot={{ fill: '#FF6B6B', strokeWidth: 2, r: 6 }}
                   />

@@ -22,3 +22,23 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment Variables
+.env
+.env.*
+
+# Personal Betting Data (Scraper Output)
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!jsconfig.json
+!src/**/*.json
+*.csv
+*.txt
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

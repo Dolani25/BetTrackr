@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./BookieSelection.css"; 
+import "./BookieSelection.css";
 import { useNavigate } from "react-router-dom";
 
 import { FaArrowLeft, FaTimes, FaSearch, FaChevronRight } from "react-icons/fa";
@@ -20,19 +20,20 @@ const bookies = [
   { name: "Paripesa", logo: "/assets/paripesa (2).jpeg", defaultClass: "Sportybet-logo" },
   { name: "Bet9ja", logo: "/assets/bet9ja.jpeg", defaultClass: "Sportybet-logo" },
   { name: "WazoBet", logo: "/assets/wazobet.jpg", defaultClass: "Sportybet-logo" },
+  { name: "Football.com", logo: "/assets/football.png", defaultClass: "Sportybet-logo" },
 ];
 
 const Header = () => (
-  
+
   <header>
     <button className="back-button"><FaArrowLeft /></button>
-    <div style={{display:"flex" , justifyContent:"center"}} id="logo">
-      <img style={{height:"24px", marginRight:"7px" , width:"24px"}} src="/assets/dice.png" alt="BetTrackr" /> 
-      <h style={{marginTop:"3px"}} >BetTrackr</h>
+    <div style={{ display: "flex", justifyContent: "center" }} id="logo">
+      <img style={{ height: "24px", marginRight: "7px", width: "24px" }} src="/assets/dice.png" alt="BetTrackr" />
+      <h style={{ marginTop: "3px" }} >BetTrackr</h>
     </div>
     <button className="close-button"><FaTimes /></button>
   </header>
-  
+
 );
 
 const SearchBar = ({ searchTerm, setSearchTerm }) => (
@@ -56,9 +57,9 @@ const BookieList = ({ searchTerm }) => {
       {bookies
         .filter((bookie) => bookie.name.toLowerCase().includes(searchTerm.toLowerCase()))
         .map((bookie, index) => (
-          <div 
-            className="bookie-item" 
-            key={index} 
+          <div
+            className="bookie-item"
+            key={index}
             onClick={() => navigate(`/login/${bookie.name}`, { state: { bookie } })}
           >
             <img className="bookie-logo" src={bookie.logo} alt={bookie.name} />
