@@ -1,38 +1,28 @@
-# Use the official Playwright image with Node.js LTS, which includes all necessary browser dependencies
-FROM node:20-bookworm
+# 1. Use the official Playwright image (matches your Node version)
+# This comes pre-baked with browsers (Chromium, Firefox, Webkit) and dependencies.
+# IMPORTANT: Check your package.json for your playwright version. 
+# If you use playwright@1.49.0, use the tag v1.49.0-jammy.
+FROM mcr.microsoft.com/playwright:v1.49.0-jammy
 
-# Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json to install dependencies
 COPY package*.json ./
 
-# Install dependencies
-# The Playwright image already has the browsers installed, so we just need to in# Install dependencies
+# 2. Install Node dependencies
 RUN npm install
 
-# Copy the rest of the application source code
 COPY . .
 
-# Install Playwright's system dependencies and browsers
-# This is necessary for the scraping functionality
-# We set the PLAYWRIGHT_BROWSERS_PATH to a known location for reliability
-ENV PLAYWRIGHT_BROWSERS_PATH=/usr/src/app/.ms-playwright
-RUN npx playwright install --with-deps
-
-# Build the React frontend
-# This will create the 'dist' folder
+# 3. Build the React frontend
 RUN npm run build
 
-# The server.js is configured to use process.env.PORT || 3001
-# Render will set the PORT environment variable automatically
+# 4. (Optional but recommended) Set browsers path explicitly if needed, 
+# though the official image handles this well.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-# Set environment variable to disable the Chromium sandbox, required for most cloud environments
+# 5. Disable sandbox for Render/Cloud environments
 ENV PLAYWRIGHT_CHROMIUM_ARGS="--no-sandbox --disable-setuid-sandbox"
 
-# Expose the port the app runs on
 EXPOSE 3001
 
-# Start the application
-# The "start" script in package.json runs "node server.js"
 CMD [ "npm", "start" ]
