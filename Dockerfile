@@ -1,28 +1,25 @@
-# 1. Use the official Playwright image (matches your Node version)
-# This comes pre-baked with browsers (Chromium, Firefox, Webkit) and dependencies.
-# IMPORTANT: Check your package.json for your playwright version. 
-# If you use playwright@1.49.0, use the tag v1.49.0-jammy.
-FROM mcr.microsoft.com/playwright:v1.49.0-jammy
+# 1. Use the official Playwright image matching your package.json version
+# This includes Node.js, Playwright 1.57.0, and all browser binaries.
+FROM mcr.microsoft.com/playwright:v1.57.0-jammy
 
+# 2. Set the working directory
 WORKDIR /usr/src/app
 
+# 3. Copy package files first (better for caching)
 COPY package*.json ./
 
-# 2. Install Node dependencies
-RUN npm install
+# 4. Install dependencies
+# Using 'npm ci' is faster and more reliable for builds than 'npm install'
+RUN npm ci
 
+# 5. Copy the rest of your application code
 COPY . .
 
-# 3. Build the React frontend
+# 6. Build the Vite frontend
 RUN npm run build
 
-# 4. (Optional but recommended) Set browsers path explicitly if needed, 
-# though the official image handles this well.
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-
-# 5. Disable sandbox for Render/Cloud environments
-ENV PLAYWRIGHT_CHROMIUM_ARGS="--no-sandbox --disable-setuid-sandbox"
-
+# 7. Expose the port your server uses
 EXPOSE 3001
 
-CMD [ "npm", "start" ]
+# 8. Start the server
+CMD ["npm", "start"]
