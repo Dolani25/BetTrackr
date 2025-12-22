@@ -19,11 +19,11 @@ const CONFIG = {
     console.log("🤖 Launching Playwright (Render Optimized)...");
 
     // 🎯 FIX: Added critical arguments for Docker/Render memory management
-    const browser = await chromium.launch({ 
+    const browser = await chromium.launch({
         headless: true,
         args: [
-            '--no-sandbox', 
-            '--disable-setuid-sandbox', 
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
             '--disable-dev-shm-usage', // critical for docker memory
             '--disable-gpu'
         ]
@@ -38,15 +38,26 @@ const CONFIG = {
     const page = await context.newPage();
 
     // ⚡ PERFORMANCE: Timeout set to 60s
-    page.setDefaultTimeout(60000); 
+    page.setDefaultTimeout(60000);
 
     // Block heavy resources
     await page.route('**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2}', route => route.abort());
 
+    // Monitor for page crashes
+    page.on('crash', () => console.error("❌ Page crashed!"));
+    page.on('pageerror', (err) => console.error(`❌ Page error: ${err.message}`));
+    page.on('requestfailed', request => {
+        console.log(`⚠️ Request failed: ${request.url()} ${request.failure()?.errorText}`);
+    });
+
     try {
         // 1. DIRECT LOGIN PAGE
         console.log("🚪 Connecting to Login Page...");
-        await page.goto('https://www.sportybet.com/ng/', { waitUntil: 'commit' });
+        try {
+            await page.goto('https://www.sportybet.com/ng/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+        } catch (e) {
+            throw new Error(`Failed to load login page: ${e.message}`);
+        }
 
         const loginBtn = page.locator('div[data-op="nav-login"]');
         await loginBtn.waitFor({ state: 'visible', timeout: 30000 });
@@ -72,10 +83,10 @@ const CONFIG = {
             // If it doesn't pop up in 5s, it probably won't.
             const closePopupBtn = page.locator('.close.icon-font-base').first();
             await closePopupBtn.waitFor({ state: 'visible', timeout: 5000 });
-            
+
             console.log("   👉 Popup detected! Closing it...");
             await closePopupBtn.click();
-            await page.waitForTimeout(1000); 
+            await page.waitForTimeout(1000);
         } catch (e) {
             console.log("   ✅ No popup detected. Moving on...");
         }
@@ -96,9 +107,9 @@ const CONFIG = {
         await fetchHistoryWithCookies(cookieString);
 
     } catch (error) {
-        console.error("❌ Process Failed:", error.message);
+        console.error(`❌ Process Failed at step: ${error.stack}`);
         if (browser) await browser.close();
-        process.exit(1); // Exit with error code so server knows it failed
+        process.exit(1);
     }
 })();
 
