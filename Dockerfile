@@ -22,7 +22,7 @@ RUN npx playwright install --with-deps
 
 # Build the React frontend
 # This will create the 'dist' folder
-RUN npm run build
+RUN npm run buildd
 
 # The server.js is configured to use process.env.PORT || 3001
 # Render will set the PORT environment variable automatically
