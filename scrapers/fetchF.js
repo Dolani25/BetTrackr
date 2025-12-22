@@ -1,6 +1,12 @@
 import { chromium, devices } from 'playwright';
 import axios from 'axios';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// 📂 SETUP PATHS (Critical for Render)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 🔐 CREDENTIALS
 const CONFIG = {
@@ -10,9 +16,18 @@ const CONFIG = {
 };
 
 (async () => {
-    console.log("🤖 Launching Playwright (Fast Mode)...");
+    console.log("🤖 Launching Playwright (Render Optimized)...");
 
-    const browser = await chromium.launch({ headless: true });
+    // 🎯 FIX: Added critical arguments for Docker/Render memory management
+    const browser = await chromium.launch({ 
+        headless: true,
+        args: [
+            '--no-sandbox', 
+            '--disable-setuid-sandbox', 
+            '--disable-dev-shm-usage', // critical for docker memory
+            '--disable-gpu'
+        ]
+    });
 
     const context = await browser.newContext({
         ...devices['Pixel 5'],
@@ -22,78 +37,54 @@ const CONFIG = {
 
     const page = await context.newPage();
 
-    // ⚡ PERFORMANCE HACK: Set longer timeouts & Block heavy files
-    page.setDefaultTimeout(60000); // Give it 60 seconds instead of 30
-    page.setDefaultNavigationTimeout(60000);
+    // ⚡ PERFORMANCE: Timeout set to 60s
+    page.setDefaultTimeout(60000); 
 
-    // This blocks images and fonts to make the page load faster
+    // Block heavy resources
     await page.route('**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2}', route => route.abort());
 
     try {
         // 1. DIRECT LOGIN PAGE
         console.log("🚪 Connecting to Login Page...");
-
-        // 'commit' means "As soon as we connect, stop waiting and move on"
         await page.goto('https://www.sportybet.com/ng/', { waitUntil: 'commit' });
 
-
         const loginBtn = page.locator('div[data-op="nav-login"]');
-        await loginBtn.waitFor({ state: 'visible', timeout: 60000 });
+        await loginBtn.waitFor({ state: 'visible', timeout: 30000 });
         await loginBtn.click();
 
         // 2. INPUT CREDENTIALS
-        // 🎯 FIX: Targeting by Placeholder because name="" is empty
         const phoneInput = page.locator('input[placeholder="Mobile Number"]');
         await phoneInput.waitFor({ state: 'visible', timeout: 30000 });
         await phoneInput.fill(CONFIG.phone);
 
-        // Target Password by placeholder
         await page.locator('input[placeholder="Password"]').fill(CONFIG.password);
 
-        // 3. CLICK LOGIN (Using your specific element)
+        // 3. CLICK LOGIN
         console.log("👆 Clicking Login button...");
-
         const loginBtn2 = page.locator('button[data-op="login-btn"]');
-
         await loginBtn2.waitFor({ state: 'visible', timeout: 10000 });
         await loginBtn2.click();
 
-
-
-
-
-        // --- 🛡️ NEW: POPUP HANDLER ---
-        console.log("👀 Checking for annoying popups...");
-
-        // We give the popup 5 seconds to appear. If not, we move on.
+        // --- 🛡️ POPUP HANDLER (Optimized) ---
+        console.log("👀 Checking for popups (5s check)...");
         try {
-            // This targets the specific "X" button you found: <div class="close icon-font-base">
+            // Reduced timeout from 50s to 5s. 
+            // If it doesn't pop up in 5s, it probably won't.
             const closePopupBtn = page.locator('.close.icon-font-base').first();
-
-            // Wait briefly to see if it pops up
-            await closePopupBtn.waitFor({ state: 'visible', timeout: 50000 });
-
-            console.log("   👉 Popup detected! Closing it...");
+            await closePopupBtn.waitFor({ state: 'visible', timeout: 5000 });
+            
+            console.log("   👉 Popup detected! Closing it...");
             await closePopupBtn.click();
-            await page.waitForTimeout(1000); // Wait for animation to close
+            await page.waitForTimeout(1000); 
         } catch (e) {
-            console.log("   ✅ No popup appeared (or I missed it). Continuing...");
+            console.log("   ✅ No popup detected. Moving on...");
         }
-
-
-
 
         // 4. WAIT FOR SUCCESS
         console.log("⏳ Waiting for dashboard...");
-        console.log("⏳ Waiting for redirection to Homepage...");
-
-        // This regex means: match "sportybet.com/ng/m/" but NOT "/login"
-        // It waits until the browser leaves the login page
-        //await page.waitForURL(/sportybet\.com\/ng\/m\/?$/, { timeout: 30000 });
-
+        // Wait for URL to change back to home (indicates successful login)
+        await page.waitForURL(/sportybet\.com\/ng\/m\/?$/, { timeout: 30000 });
         console.log("🔓 Login Successful! (URL is back to home)");
-
-
 
         // 5. EXTRACT COOKIES
         const cookies = await context.cookies();
@@ -106,13 +97,8 @@ const CONFIG = {
 
     } catch (error) {
         console.error("❌ Process Failed:", error.message);
-        try {
-            await page.screenshot({ path: 'fast_error.png' });
-            console.log("📸 Saved screenshot to 'fast_error.png'");
-        } catch (e) {
-            console.log("⚠️ Could not take screenshot (Browser might be closed)");
-        }
         if (browser) await browser.close();
+        process.exit(1); // Exit with error code so server knows it failed
     }
 })();
 
@@ -166,10 +152,13 @@ async function fetchHistoryWithCookies(validCookie) {
     }
 
     if (allBets.length > 0) {
-        fs.writeFileSync('my_bets.json', JSON.stringify(allBets, null, 2));
+        // 🎯 FIX: Save to absolute path inside scrapers/ folder
+        const outputPath = path.join(__dirname, 'my_bets.json');
+        fs.writeFileSync(outputPath, JSON.stringify(allBets, null, 2));
 
         console.log("\n📊 --- FINAL REPORT ---");
-        console.table(allBets);
-        console.log("✅ Data saved to 'my_bets.json'");
+        console.log(`✅ Data saved to '${outputPath}'`);
+    } else {
+        console.log("⚠️ No bets found to save.");
     }
 }
