@@ -32,7 +32,7 @@ async function runScraper(scraperName, scriptPath, envVars = {}) {
       const chunk = data.toString();
       output += chunk;
       // Optional: Stream logs to Render console in real-time
-      console.log(`[${scraperName}] ${chunk.trim()}`); 
+      console.log(`[${scraperName}] ${chunk.trim()}`);
     });
 
     // Collect error logs (console.error)
@@ -42,13 +42,14 @@ async function runScraper(scraperName, scriptPath, envVars = {}) {
 
     scraper.on('close', (code) => {
       if (code !== 0) {
-        console.error(`${scraperName} scraper failed with code ${code}`);
-        // 🚨 IMPORTANT: Log the actual output so we see WHY it failed
-        console.error(`--- SCAPER LOGS ---`);
-        console.error(output); 
-        console.error(`--- END LOGS ---`);
-        
-        reject(new Error(`${scraperName} scraper failed. Check server logs for details.`));
+        console.error(`\n❌ ${scraperName} FAILED (Exit Code: ${code})`);
+        console.error(`--- SCAPER STDOUT ---`);
+        console.log(output);
+        console.error(`--- SCAPER STDERR ---`);
+        console.error(errorOutput);
+        console.error(`--- END LOGS ---\n`);
+
+        reject(new Error(`${scraperName} scraper failed with code ${code}. Check server logs for details.`));
         return;
       }
 
@@ -65,10 +66,10 @@ async function runScraper(scraperName, scriptPath, envVars = {}) {
       // Robust Path Checking: Check both root and scrapers/ folder
       // This supports the fix we made to fetchF.js
       let jsonPath = path.join(__dirname, 'scrapers', jsonFile); // Try scrapers folder first (Best practice)
-      
+
       if (!fs.existsSync(jsonPath)) {
-          // Fallback to root
-          jsonPath = path.join(__dirname, jsonFile);
+        // Fallback to root
+        jsonPath = path.join(__dirname, jsonFile);
       }
 
       if (!fs.existsSync(jsonPath)) {
@@ -133,7 +134,7 @@ app.post('/api/login', async (req, res) => {
 
   try {
     console.log(`Starting ${scraperName} scraper...`);
-    
+
     const bets = await runScraper(scraperName, scriptPath, {
       SCRAPER_USERNAME: username,
       SCRAPER_PASSWORD: password
@@ -202,7 +203,7 @@ app.get('/api/bets/:bookie', (req, res) => {
   // Check scrapers folder first, then root
   let jsonPath = path.join(__dirname, 'scrapers', jsonFile);
   if (!fs.existsSync(jsonPath)) {
-     jsonPath = path.join(__dirname, jsonFile);
+    jsonPath = path.join(__dirname, jsonFile);
   }
 
   if (!fs.existsSync(jsonPath)) {

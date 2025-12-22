@@ -32,7 +32,8 @@ const CONFIG = {
     const context = await browser.newContext({
         ...devices['Pixel 5'],
         locale: 'en-NG',
-        timezoneId: 'Africa/Lagos'
+        timezoneId: 'Africa/Lagos',
+        ignoreHTTPSErrors: true
     });
 
     const page = await context.newPage();
