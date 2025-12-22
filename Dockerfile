@@ -1,5 +1,5 @@
 # Use the official Playwright image with Node.js LTS, which includes all necessary browser dependencies
-FROM mcr.microsoft.com/playwright/node:lts
+FROM node:20-bookworm
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
@@ -8,15 +8,19 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install dependencies
-# The Playwright image already has the browsers installed, so we just need to install node dependencies
+# The Playwright image already has the browsers installed, so we just need to in# Install dependencies
 RUN npm install
 
 # Copy the rest of the application source code
 COPY . .
 
+# Install Playwright's system dependencies and browsers
+# This is necessary for the scraping functionality
+RUN npx playwright install --with-deps
+
 # Build the React frontend
 # This will create the 'dist' folder
-RUN npm run build
+RUN npm run buildd
 
 # The server.js is configured to use process.env.PORT || 3001
 # Render will set the PORT environment variable automatically
