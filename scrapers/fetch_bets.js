@@ -8,7 +8,7 @@ const CONFIG = {
     // The exact URL found in your HAR file
     baseUrl: "https://www.sportybet.com/api/ng/orders/order/v3/realbetlist",
     cookie: YOUR_COOKIE,
-    maxPages: 3
+    maxPages: 100 // Increased from 3 to 100 so it doesn't max out at 30 bets
 };
 
 async function fetchBetHistory() {
@@ -22,10 +22,9 @@ async function fetchBetHistory() {
         try {
             // These parameters match exactly what your browser sends
             const params = new URLSearchParams({
-                'offset': '0',
-                'limit': '10',  // Browser asks for 10 at a time
-                'status': '-1', // -1 usually means "All" (Settled + Running)
-                'isSettled': 'true',
+                'pageSize': '10',  // Browser asks for 10 at a time
+                'isHistory': '0',
+                'isSettled': '1',
                 '_t': Date.now() // Anti-caching timestamp
             });
 
@@ -71,10 +70,16 @@ async function fetchBetHistory() {
             // Extract Data
             bets.forEach(bet => {
                 const statusMap = { 10: 'Running', 20: 'Won/Paid', 30: 'Lost' };
-                // Extract Sport (Try outcomes first, then generic fallback)
+                // Extract Sport
                 let sport = 'Unknown';
                 if (bet.outcomes && bet.outcomes.length > 0) {
                     sport = bet.outcomes[0].sportName || 'Unknown';
+                } else if (bet.selections && bet.selections.length > 0) {
+                    const sId = bet.selections[0].sportId;
+                    if (sId === 'sr:sport:1') sport = 'Soccer';
+                    else if (sId === 'sr:sport:2') sport = 'Basketball';
+                    else if (sId === 'sr:sport:5') sport = 'Tennis';
+                    else sport = sId || 'Unknown';
                 }
 
                 allBets.push({
@@ -90,16 +95,20 @@ async function fetchBetHistory() {
 
             console.log(`✅ Page ${pageCount + 1}: Fetched ${bets.length} bets.`);
 
-            // Pagination Logic (SportyBet uses 'lastId' for the next page)
-            if (result.data.lastId) {
-                lastId = result.data.lastId;
+            // Pagination Logic
+            if (bets.length > 0) {
+                lastId = bets[bets.length - 1].orderId;
                 pageCount++;
             } else {
                 break;
             }
 
+            if (bets.length < 10) {
+                break;
+            }
+
             // Polite delay
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, 5500));
 
         } catch (error) {
             console.error("⚠️ Request Failed:", error.message);

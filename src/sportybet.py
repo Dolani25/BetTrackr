@@ -407,6 +407,16 @@ class SportyBetScraper:
                     except:
                         pass
 
+                # Scroll to the bottom to load all virtualized rows
+                last_height = await page.evaluate("document.body.scrollHeight")
+                while True:
+                    await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                    await asyncio.sleep(1)
+                    new_height = await page.evaluate("document.body.scrollHeight")
+                    if new_height == last_height:
+                        break
+                    last_height = new_height
+
                 page_text = await page.inner_text('body')
                 bets = self.parse_bet_data_from_text(page_text)
                 return bets

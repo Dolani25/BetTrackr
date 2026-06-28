@@ -3,44 +3,76 @@ import { Box, Typography, Tooltip as MuiTooltip } from '@mui/material';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
-const BettingCalendar = () => {
+const BettingCalendar = ({ bets }) => {
+  const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
+  
   // Config to match D3 look
-  const year = 2024;
   const gap = 1; // unit in SVG space
   const cell = 11; // unit in SVG space (scales with viewBox)
   const marginTop = 16; // room for month labels
   const marginLeft = 20; // room for weekday labels inside SVG
 
-  // Generate sample betting data for the calendar
-  const generateBettingData = () => {
-    const data = [];
-    const startDate = new Date(year, 0, 1);
-    const endDate = new Date(year, 11, 31);
-
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      // Random betting activity (70% chance of having a bet)
-      if (Math.random() > 0.3) {
-        data.push({
-          date: new Date(d),
-          result: Math.random() > 0.4 ? 'win' : 'loss', // 60% win rate
-          count: Math.floor(Math.random() * 3) + 1 // 1-3 bets per day
-        });
+  // Process data and find available years
+  const { processedData, availableYears } = React.useMemo(() => {
+    if (!bets || !Array.isArray(bets)) return { processedData: [], availableYears: [new Date().getFullYear()] };
+    
+    const dailyMap = new Map();
+    const yearsSet = new Set();
+    
+    bets.forEach(bet => {
+      const d = new Date(bet.Date);
+      if (isNaN(d.getTime())) return;
+      
+      const year = d.getFullYear();
+      yearsSet.add(year);
+      
+      const dateStr = d.toDateString();
+      const status = bet.Status?.toLowerCase() || '';
+      const isWin = status.includes('won');
+      const isLoss = status.includes('lost');
+      
+      if (!dailyMap.has(dateStr)) {
+        dailyMap.set(dateStr, { date: new Date(d), wins: 0, losses: 0, count: 0, year });
       }
+      
+      const dayData = dailyMap.get(dateStr);
+      dayData.count++;
+      if (isWin) dayData.wins++;
+      if (isLoss) dayData.losses++;
+    });
+
+    const years = Array.from(yearsSet).sort((a, b) => b - a);
+    if (years.length === 0) years.push(new Date().getFullYear());
+
+    const data = Array.from(dailyMap.values()).map(d => ({
+      date: d.date,
+      result: d.wins >= d.losses ? 'win' : 'loss',
+      count: d.count,
+      year: d.year
+    }));
+
+    return { processedData: data, availableYears: years };
+  }, [bets]);
+
+  // Set initial year to most recent if current year has no data
+  React.useEffect(() => {
+    if (!availableYears.includes(selectedYear) && availableYears.length > 0) {
+      setSelectedYear(availableYears[0]);
     }
-    return data;
-  };
+  }, [availableYears]);
 
-  const bettingData = generateBettingData();
+  // Quick lookup map by date string for SELECTED YEAR ONLY
+  const dataMap = React.useMemo(() => {
+    const map = new Map();
+    processedData.filter(d => d.year === selectedYear).forEach((d) => {
+      map.set(d.date.toDateString(), d);
+    });
+    return map;
+  }, [processedData, selectedYear]);
 
-  // Quick lookup map by date string
-  const dataMap = new Map();
-  bettingData.forEach((d) => {
-    dataMap.set(d.date.toDateString(), d);
-  });
-
-  // Compute all days covering full weeks of the year
-  const start = new Date(year, 0, 1);
-  const end = new Date(year, 11, 31);
+  // Compute all days covering full weeks of the selected year
+  const start = new Date(selectedYear, 0, 1);
+  const end = new Date(selectedYear, 11, 31);
   const startSunday = new Date(start);
   startSunday.setDate(start.getDate() - ((start.getDay() + 7) % 7));
   const endSaturday = new Date(end);
@@ -65,7 +97,7 @@ const BettingCalendar = () => {
 
   // Month label anchors -> week index for first day of month
   const monthAnchors = Array.from({ length: 12 }, (_, m) => {
-    const first = new Date(year, m, 1);
+    const first = new Date(selectedYear, m, 1);
     const weekIndex = Math.floor((first - startSunday) / msPerDay / 7);
     return { m, weekIndex, name: first.toLocaleDateString('en-US', { month: 'short' }) };
   });
@@ -107,26 +139,62 @@ const BettingCalendar = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <MuiTooltip
-        arrow
-        placement="top"
-        title={
-          <Box sx={{ p: 1 }}>
-            <Typography variant="caption" display="block">
-              Daily activity across the year. Green = wins, Pink = losses. Intensity ∝ number of bets that day.
-            </Typography>
-            <BlockMath math={"v_d = \\mathrm{sgn}(result_d) \\cdot count_d"} />
-            <BlockMath math={"t_d = \\frac{|v_d|}{\\max_k |v_k|} \\in [0,1]"} />
-            <Typography variant="caption" display="block">
-              Color map: <InlineMath math={"v_d < 0"}/> → pink-red, <InlineMath math={"v_d = 0"}/> → neutral gray, <InlineMath math={"v_d > 0"}/> → green.
-            </Typography>
-          </Box>
-        }
-      >
-        <Typography variant="h6" gutterBottom>
-          Betting Activity Calendar 2024
-        </Typography>
-      </MuiTooltip>
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" sx={{ mb: 2 }}>
+        <MuiTooltip
+          arrow
+          placement="top"
+          title={
+            <Box sx={{ p: 1 }}>
+              <Typography variant="caption" display="block">
+                Daily activity across the year. Green = wins, Pink = losses. Intensity ∝ number of bets that day.
+              </Typography>
+              <BlockMath math={"v_d = \\mathrm{sgn}(result_d) \\cdot count_d"} />
+              <BlockMath math={"t_d = \\frac{|v_d|}{\\max_k |v_k|} \\in [0,1]"} />
+              <Typography variant="caption" display="block">
+                Color map: <InlineMath math={"v_d < 0"}/> → pink-red, <InlineMath math={"v_d = 0"}/> → neutral gray, <InlineMath math={"v_d > 0"}/> → green.
+              </Typography>
+            </Box>
+          }
+        >
+          <Typography variant="h6">
+            Betting Activity Calendar {selectedYear}
+          </Typography>
+        </MuiTooltip>
+
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 1, 
+          mt: { xs: 1, sm: 0 },
+          overflowX: 'auto',
+          maxWidth: '100%',
+          pb: 0.5,
+          '&::-webkit-scrollbar': { display: 'none' },
+          msOverflowStyle: 'none',
+          scrollbarWidth: 'none',
+          flexWrap: 'nowrap'
+        }}>
+          {availableYears.map(yr => (
+            <Box
+              key={yr}
+              onClick={() => setSelectedYear(yr)}
+              sx={{
+                px: 1.5,
+                py: 0.5,
+                borderRadius: '16px',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                backgroundColor: selectedYear === yr ? '#216e39' : '#ebedf0',
+                color: selectedYear === yr ? 'white' : 'text.secondary',
+                fontWeight: selectedYear === yr ? 'bold' : 'normal',
+                '&:hover': { opacity: 0.8 },
+                flexShrink: 0
+              }}
+            >
+              {yr}
+            </Box>
+          ))}
+        </Box>
+      </Box>
       <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: 'block' }}>
         Green: Wins | Pink: Losses | Intensity: Number of bets
       </Typography>

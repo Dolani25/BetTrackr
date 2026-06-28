@@ -10,8 +10,13 @@ import { AlertProvider, useAlert } from "./AlertContext";
 
 import { Toaster } from 'react-hot-toast';
 
+import DocumentViewer from "./pages/DocumentViewer";
+
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Initial check for token
+    return !!localStorage.getItem('bt_token');
+  });
   const [activeBookie, setActiveBookie] = useState('sportybet'); // Default or empty
 
   return (
@@ -32,6 +37,9 @@ const App = () => {
         <Routes>
           {/* First page */}
           <Route path="/" element={<BookieSelection />} />
+
+          {/* Document routes */}
+          <Route path="/docs/:docName" element={<DocumentViewer />} />
 
           {/* Login route */}
           <Route

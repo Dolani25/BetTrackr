@@ -1,0 +1,117 @@
+.document-container {
+  min-height: 100vh;
+  background-color: #fff;
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.document-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.document-header .back-button {
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.document-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  line-height: 1.6;
+}
+
+.markdown-body h1 {
+  font-size: 2.2rem;
+  margin-bottom: 30px;
+  color: #1ed760;
+  /* Vibrant green */
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.markdown-body h2 {
+  font-size: 1.5rem;
+  margin-top: 40px;
+  margin-bottom: 20px;
+  color: #111;
+}
+
+.markdown-body h3 {
+  font-size: 1.2rem;
+  margin-top: 30px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.markdown-body p {
+  margin-bottom: 15px;
+  color: #444;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin-bottom: 20px;
+  padding-left: 20px;
+  color: #444;
+}
+
+.markdown-body li {
+  margin-bottom: 8px;
+}
+
+.markdown-body hr {
+  border: 0;
+  border-top: 1px solid #eee;
+  margin: 40px 0;
+}
+
+.markdown-body pre {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 20px;
+  border: 1px solid #eee;
+}
+
+.markdown-body code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9em;
+  background-color: #f1f3f5;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #d63384;
+}
+
+.markdown-body blockquote {
+  border-left: 4px solid #1ed760;
+  padding-left: 20px;
+  margin-left: 0;
+  color: #666;
+  font-style: italic;
+  background-color: #f9fffb;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  font-size: 1.2rem;
+  color: #999;
+}

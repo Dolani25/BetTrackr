@@ -37,6 +37,13 @@ const TimeSeriesChart = ({ data }) => {
     return () => clearInterval(intervalRef.current);
   }, []);
 
+  const getTimeSpan = () => {
+    if (data.length < 2) return 0;
+    const timestamps = data.map(d => new Date(d.timestamp).getTime());
+    return Math.max(...timestamps) - Math.min(...timestamps);
+  };
+  const isShortSpan = getTimeSpan() < 24 * 60 * 60 * 1000;
+
   return (
     <div>
       <ResponsiveContainer width="100%" height={400}>
@@ -44,7 +51,12 @@ const TimeSeriesChart = ({ data }) => {
           <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.3} />
           <XAxis 
             dataKey="timestamp" 
-            tickFormatter={(tick) => new Date(tick).toLocaleDateString()} 
+            tickFormatter={(tick) => {
+              const d = new Date(tick);
+              return isShortSpan 
+                ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) 
+                : d.toLocaleDateString();
+            }}
             tick={{ fill: '#ffffff', fontSize: 12 }}
             axisLine={{ stroke: '#ffffff', opacity: 0.5 }}
             tickLine={{ stroke: '#ffffff', opacity: 0.5 }}
@@ -55,11 +67,20 @@ const TimeSeriesChart = ({ data }) => {
             tickLine={{ stroke: '#ffffff', opacity: 0.5 }}
           />
           <Tooltip 
+            labelFormatter={(label) => new Date(label).toLocaleString()}
+            formatter={(value) => [
+              <span style={{ color: value >= 0 ? '#2e7d32' : '#d32f2f', fontWeight: 'bold' }}>
+                ₦{Number(value).toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </span>, 
+              'Profit/Loss'
+            ]}
             contentStyle={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-              border: '1px solid #667eea',
+              backgroundColor: 'rgba(255, 255, 255, 0.98)', 
+              border: '2px solid #667eea',
               borderRadius: '8px',
-              color: '#333'
+              color: '#333',
+              fontSize: '13px',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }}
           />
           <Line type="monotone" dataKey="value" stroke="#ffffff" strokeWidth={3} dot={{ fill: '#ffffff', strokeWidth: 2, r: 4 }} />

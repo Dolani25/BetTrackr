@@ -12,7 +12,7 @@ const bookies = [
   { name: "Parimatch", logo: "/assets/parimatch.jpeg", defaultClass: "Sportybet-logo" },
   { name: "BetWay", logo: "/assets/betway.png", defaultClass: "Sportybet-logo" },
   { name: "MSport", logo: "/assets/Msport.png", defaultClass: "Sportybet-logo" },
-  { name: "BetBonaza", logo: "/assets/betbonaza.jpeg", defaultClass: "Sportybet-logo" },
+  { name: "Stake", logo: "/assets/stake.jpg", defaultClass: "Sportybet-logo" },
   { name: "1xBet", logo: "/assets/1xbet.png", defaultClass: "Sportybet-logo" },
   { name: "22Bet", logo: "/assets/22bet.jpeg", defaultClass: "Sportybet-logo" },
   { name: "NairaBet", logo: "/assets/nairabet.png", defaultClass: "Sportybet-logo" },
@@ -21,15 +21,18 @@ const bookies = [
   { name: "Bet9ja", logo: "/assets/bet9ja.jpeg", defaultClass: "Sportybet-logo" },
   { name: "WazoBet", logo: "/assets/wazobet.jpg", defaultClass: "Sportybet-logo" },
   { name: "Football.com", logo: "/assets/football.png", defaultClass: "Sportybet-logo" },
+  { name: "BetPawa", logo: "/assets/pawa.jpg", defaultClass: "Sportybet-logo" },
+  { name: "BC.Game", logo: "/assets/bcgame.png", defaultClass: "Sportybet-logo" },
+  { name: "Betano", logo: "/assets/betano.jpg", defaultClass: "Sportybet-logo" },
 ];
 
 const Header = () => (
 
   <header>
     <button className="back-button"><FaArrowLeft /></button>
-    <div style={{ display: "flex", justifyContent: "center" }} id="logo">
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }} id="logo">
       <img style={{ height: "24px", marginRight: "7px", width: "24px" }} src="/assets/dice.png" alt="BetTrackr" />
-      <h style={{ marginTop: "3px" }} >BetTrackr</h>
+      <span style={{ fontWeight: 600, color: "#707070", fontSize: "1.1rem", display: "flex", alignItems: "center" }}>BetTrackr</span>
     </div>
     <button className="close-button"><FaTimes /></button>
   </header>
@@ -71,17 +74,20 @@ const BookieList = ({ searchTerm }) => {
   );
 };
 
+import FooterLinks from "./components/FooterLinks";
+
 const BookieSelection = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Header />
-      <section>
+      <section style={{ flex: 1 }}>
         <h2>Choose your Bookie</h2>
         <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         <BookieList searchTerm={searchTerm} />
       </section>
+      <FooterLinks />
     </div>
   );
 };

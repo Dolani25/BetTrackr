@@ -1,25 +1,19 @@
+import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import UserPic from "/assets/i.jpeg";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-
-import TimeSeriesChart from "./TimeSeriesChart.jsx"
 
 import OverviewTab from './components/OverviewTab';
 import BettingBehaviorTab from './components/BettingBehaviorTab';
 import PsychologyTab from './components/PsychologyTab';
+import DiceLoader from './components/DiceLoader';
 import toast from 'react-hot-toast';
+import { RotateCcw } from 'lucide-react';
 
-import { FaArrowUp, FaPercent, FaHandHoldingUsd, FaArrowDown, FaCheck, FaPlus } from "react-icons/fa"
-
-import { Trophy, History, Scale, Calculator, Landmark, Percent, Coins, Scissors } from 'lucide-react';
-
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend, ResponsiveContainer } from 'recharts';
-
-const data = [{ name: 'Page A', uv: 400, pv: 2400, amt: 2400 }, { name: 'Page B', uv: 200, pv: 1500, amt: 1300 }, { name: 'Page C', uv: 300, pv: 1400, amt: 2700 }];
+import { FaPlus } from "react-icons/fa"
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -48,97 +42,6 @@ function a11yProps(index) {
   };
 }
 
-const donutData = [
-  { name: "Wins", value: 45 },
-  { name: "Losses", value: 30 },
-  { name: "Draws", value: 25 },
-];
-
-const GRADIENT_COLORS = [
-  "url(#winGradient)",
-  "url(#lossGradient)",
-  "url(#drawGradient)",
-];
-
-const renderDonutChart = (
-  <div id="Donut" style={{ fontFamily: "Playfair Display", borderRadius: "6px", textTransform: "uppercase", width: "100%", maxWidth: "2000px", padding: "0vmin", margin: "auto", position: "relative", backgroundImage: "linear-gradient(to right, #4facfe 0%, #00f2fe 100%)" }}>
-    <p>Win/Loss Distribution</p>
-    {/* SVG Gradients for Arc Colors */}
-    <svg width="0" height="0">
-      <defs>
-        <linearGradient id="winGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: "#ff4b1f", stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: "#ff9068", stopOpacity: 1 }} />
-        </linearGradient>
-
-        <linearGradient id="lossGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: "#1fa2ff", stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: "#12d8fa", stopOpacity: 1 }} />
-        </linearGradient>
-
-        <linearGradient id="drawGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: "#f9d423", stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: "#ffde70", stopOpacity: 1 }} />
-        </linearGradient>
-      </defs>
-    </svg>
-
-    {/* Donut Chart */}
-    <ResponsiveContainer width="100%" height={300}>
-
-      <PieChart>
-        <Pie
-          data={donutData}
-          cx="50%"
-          cy="50%"
-          innerRadius={70} // Makes it a donut chart
-          outerRadius={100}
-          paddingAngle={2}
-          cornerRadius={2}
-          dataKey="value"
-        >
-          {donutData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={GRADIENT_COLORS[index % GRADIENT_COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
-
-    {/* Centered Text */}
-    <div
-      style={{
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        textAlign: "center",
-        fontWeight: "bold",
-        fontSize: "16px",
-        textTransform: "uppercase",
-        color: "#333",
-      }}
-    >
-      <div>Total games played</div>
-      <div style={{ fontSize: "20px", fontWeight: "bold", color: "#000" }}>3519</div>
-    </div>
-  </div>
-);
-
-const renderLineChart = (
-  <div style={{ marginBottom: "3vmin", fontFamily: "Playfair Display", paddingTop: "3vmin", borderRadius: "6px", backgroundImage: "linear-gradient(to top, #0ba360 0%, #3cba92 100%)", height: "35vh", width: "100%", maxWidth: "100vw", overflowX: "auto" }}>
-    <p style={{ marginBottom: "5vmin", marginLeft: "4vmin", fontWeight: "600", color: "#fff", fontSize: "", textTransform: "uppercase" }}> Chart</p>
-    <LineChart style={{ fontFamily: "Playfair Display" }} width={window.innerWidth * 0.9} height={200} data={data}>
-      <Line type="monotone" dataKey="uv" stroke="#8884d8" />
-      <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-      <XAxis dataKey="name" />
-      <YAxis />
-      <Tooltip />
-    </LineChart>
-  </div>
-);
-
 const formatCurrency = (amount) => {
   return '₦' + new Intl.NumberFormat('en-US', {
     style: 'decimal',
@@ -147,117 +50,454 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-const Card = ({ bg, icon, action, amount }) => (
-  <div style={{ backgroundImage: bg }} className="Card">
-    <span>
-      <p>{action}</p>
-      <h3>{formatCurrency(amount)}</h3>
-    </span>
-    <div className="CardIcon">{icon}</div>
-  </div>
-);
-
-const Balance = () => (
-  <div className="Balance">
-    <h2>{formatCurrency(82737573.76)}</h2>
-    <h5>YOUR BALANCE</h5>
-  </div>
-);
-
-const User = () => (
-  <div className="User">
-    <div style={{ position: "relative", display: "inline-block" }}>
-      <img id="UserPic" src={UserPic} alt="UserPic" />
-      <div style={{
-        position: "absolute",
-        bottom: "2px",
-        right: "2px",
-        width: "18px",
-        height: "18px",
-        backgroundColor: "#283038",
-        borderRadius: "50%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        border: "2px solid white"
-      }}>
-        <FaPlus style={{ fontSize: "10px", color: "#f1f1f1" }} />
-      </div>
+const Balance = ({ amount }) => {
+  return (
+    <div className="Balance">
+      <h2>{formatCurrency(amount || 0)}</h2>
+      <h5>YOUR BALANCE</h5>
     </div>
-    <p className="UserText"><span>What's Up,</span><span style={{ fontWeight: "600" }} > Dolani</span></p>
-    <img className="UserIcon" src="./assets/dice.png" alt="BetTrackr Logo" />
-  </div>
-);
+  );
+};
+
+
+
+const TIME_PERIODS = [
+  { key: '1d', label: 'Day', days: 1 },
+  { key: '1w', label: 'Week', days: 7 },
+  { key: '1m', label: 'Month', days: 30 },
+  { key: '3m', label: '3M', days: 90 },
+  { key: '6m', label: '6M', days: 180 },
+  { key: '1y', label: '1Y', days: 365 },
+  { key: 'all', label: 'All', days: null },
+];
 
 const Dashboard = ({ activeBookie }) => {
-  const [data, setData] = useState([]);
   const [rawBets, setRawBets] = useState([]);
   const [value, setValue] = useState(0);
+  const [syncedBookies, setSyncedBookies] = useState([]);
+  const [linkedAccounts, setLinkedAccounts] = useState([]); // { bookie, username, lastSync }[]
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [forceFullSync, setForceFullSync] = useState(false);
+  const [selectedBookie, setSelectedBookie] = useState('all'); // 'all' or bookie name
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState('all'); // key from TIME_PERIODS
+  const [profile, setProfile] = useState({ balance: 0, nickname: 'User' });
+  const navigate = useNavigate();
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
 
-  useEffect(() => {
-    // Fetch betting data
-    const fetchData = async () => {
-      const toastId = toast.loading('Syncing bets...');
-      try {
-        const response = await fetch(`/api/bets/${activeBookie || 'sportybet'}`);
-        const result = await response.json();
+  // Helper function to safely parse numbers
+  const cleanNumber = (val) => {
+    if (val === null || val === undefined || val === '') return 0;
+    const num = parseFloat(String(val).replace(/,/g, ''));
+    return isNaN(num) || !isFinite(num) ? 0 : num;
+  };
 
-        if (result.success && result.data) {
-          // Process data for the chart (filtering for wins/losses over time)
-          const processedData = processChartData(result.data);
-          setData(processedData);
-          setRawBets(result.data); // Store raw bets
-          toast.success('Sync complete!', { id: toastId });
-        } else {
-          toast.error('No bets found', { id: toastId });
+  const isSyncingRef = React.useRef(false);
+  const pollIntervalRef = React.useRef(null);
+
+  const refreshBets = useCallback(async (isPoll = false) => {
+    const token = localStorage.getItem('bt_token');
+    if (!token) return;
+
+    try {
+      if (!isPoll) setIsLoading(true);
+      const response = await fetch(`/api/bets/all${isPoll ? '?isPoll=true' : ''}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success) {
+        setRawBets(result.data || []);
+        setIsSyncing(result.isSyncing || false);
+        isSyncingRef.current = result.isSyncing || false;
+
+        if (!isPoll && result.data?.length > 0) {
+          toast.success(`Data loaded (${result.data.length} bets)`, { id: 'data-loaded' });
+        } else if (!isPoll && !result.isSyncing && result.data?.length === 0) {
+          toast.error('No bets found', { id: 'data-loaded' });
         }
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        toast.error('Sync failed', { id: toastId });
+      }
+    } catch (err) {
+      console.error("Fetch data error:", err);
+    } finally {
+      if (!isPoll) setIsLoading(false);
+    }
+  }, []);
+
+  const fetchProfile = useCallback(async () => {
+    const token = localStorage.getItem('bt_token');
+    if (!token) return;
+
+    try {
+      const res = await fetch('/api/user/profile', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await res.json();
+      if (result.success) {
+        setProfile({ balance: result.balance, nickname: result.nickname });
+        localStorage.setItem('bt_balance', result.balance);
+        localStorage.setItem('bt_nickname', result.nickname);
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
+  }, []);
+
+  const fetchBookies = useCallback(async () => {
+    const token = localStorage.getItem('bt_token');
+    if (!token) return;
+
+    try {
+      const bookieRes = await fetch(`/api/user/bookies`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const bookieData = await bookieRes.json();
+      if (bookieData.success) {
+        if (bookieData.bookies) setSyncedBookies(bookieData.bookies);
+        if (bookieData.accounts) setLinkedAccounts(bookieData.accounts);
+        return bookieData.accounts;
+      }
+    } catch (err) {
+      console.error("Error fetching bookies:", err);
+    }
+    return null;
+  }, []);
+
+  const startPolling = useCallback(() => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    const token = localStorage.getItem('bt_token');
+
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const statusRes = await fetch('/api/sync/status', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const statusResult = await statusRes.json();
+        
+        const wasSync = isSyncingRef.current;
+        const isNowSync = statusResult.isSyncing || false;
+
+        if (wasSync && !isNowSync) {
+          // Sync just finished!
+          const accounts = await fetchBookies();
+          await fetchProfile();
+          await refreshBets(false);
+
+          if (accounts && accounts.some(a => a.syncError)) {
+            const failed = accounts.find(a => a.syncError);
+            toast.error(`Sync partially failed: ${failed.syncError}`, { id: 'sync-finished', duration: 6000 });
+          } else {
+            toast.success('Background sync complete!', { id: 'sync-finished' });
+          }
+
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+        } else if (!isNowSync && pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+
+        setIsSyncing(isNowSync);
+        isSyncingRef.current = isNowSync;
+      } catch (err) {
+        console.error("Poller error:", err);
+      }
+    }, 5000);
+  }, [fetchBookies, fetchProfile, refreshBets]);
+
+  useEffect(() => {
+    toast.dismiss();
+    
+    const init = async () => {
+      await fetchProfile();
+      await fetchBookies();
+      await refreshBets(false);
+      
+      // If we are currently syncing, start the poller
+      const token = localStorage.getItem('bt_token');
+      const statusRes = await fetch('/api/sync/status', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const statusResult = await statusRes.json();
+      if (statusResult.isSyncing) {
+        setIsSyncing(true);
+        isSyncingRef.current = true;
+        startPolling();
       }
     };
 
-    fetchData();
-  }, []);
+    init();
 
-  const processChartData = (bets) => {
-    // Helper to group bets by date and sum stakes/returns
-    // This is a simple aggregation for the demo
-    const grouped = {};
-    bets.slice(0, 50).forEach(bet => { // Limit to 50 for performance
-      const date = new Date(bet.Date).toISOString().split('T')[0];
-      if (!grouped[date]) grouped[date] = 0;
-      // Example metric: net profit/loss
-      const stake = parseFloat(bet.Stake) || 0;
-      const returns = parseFloat(bet.Return) || 0;
-      grouped[date] += (returns - stake);
-    });
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, [fetchProfile, fetchBookies, refreshBets, startPolling]);
 
-    return Object.keys(grouped).map(date => ({
-      timestamp: date,
-      value: grouped[date]
-    })).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const handleManualSync = async () => {
+    if (isSyncing) return;
+    
+    try {
+      const token = localStorage.getItem('bt_token');
+      const res = await fetch('/api/sync/trigger', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ forceFullSync })
+      });
+      const result = await res.json();
+      if (result.success) {
+        toast.success('Sync started for all accounts');
+        setIsSyncing(true);
+        isSyncingRef.current = true;
+        startPolling(); // Seamlessly start polling without reload
+      } else {
+        toast.error(result.message || 'Failed to start sync');
+      }
+    } catch (err) {
+      console.error("Manual sync error:", err);
+      toast.error('Connection error');
+    }
   };
 
-  return (
-    <div id="Dashboard" >
-      <User />
-      <Balance />
+  // Build display labels for linked accounts
+  const getAccountLabels = () => {
+    if (linkedAccounts.length === 0) {
+      return syncedBookies.map(b => ({ label: b, bookie: b }));
+    }
 
-      {/* Navigation Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'white' }}>
+    const bookieCounts = {};
+    linkedAccounts.forEach(acc => {
+      bookieCounts[acc.bookie] = (bookieCounts[acc.bookie] || 0) + 1;
+    });
+
+    return linkedAccounts.map(acc => ({
+      label: bookieCounts[acc.bookie] > 1 ? `${acc.bookie} (${acc.username})` : acc.bookie,
+      bookie: acc.bookie,
+      username: acc.username,
+      syncError: acc.syncError
+    }));
+  };
+
+  // --- FILTERED BETS ---
+  const filteredBets = useMemo(() => {
+    let bets = rawBets;
+    if (selectedBookie !== 'all') {
+      bets = bets.filter(b => b.Bookie === selectedBookie);
+    }
+    if (selectedTimePeriod !== 'all') {
+      const period = TIME_PERIODS.find(p => p.key === selectedTimePeriod);
+      if (period && period.days) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - period.days);
+        bets = bets.filter(b => {
+          const betDate = new Date(b.Date);
+          return betDate >= cutoff;
+        });
+      }
+    }
+    return bets;
+  }, [rawBets, selectedBookie, selectedTimePeriod]);
+
+  const bookieOptions = useMemo(() => {
+    return [...new Set(rawBets.map(b => b.Bookie).filter(Boolean))];
+  }, [rawBets]);
+
+  const User = () => (
+    <div className="User">
+      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+        <img id="UserPic" src={UserPic} alt="UserPic" />
+        <div
+          onClick={() => navigate("/")}
+          style={{
+            position: "absolute",
+            bottom: "0",
+            right: "0",
+            width: "18px",
+            height: "18px",
+            backgroundColor: "#283038",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "2px solid white",
+            cursor: "pointer"
+          }}
+        >
+          <FaPlus style={{ fontSize: "10px", color: "#f1f1f1" }} />
+        </div>
+      </div>
+      <div className="UserText">
+        <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '8px' }}>
+          <span>What's Up, <span style={{ fontWeight: "600", textTransform: "capitalize" }} > {profile.nickname}</span></span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <label style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              fontSize: '0.65rem', 
+              cursor: isSyncing ? 'not-allowed' : 'pointer',
+              userSelect: 'none',
+              color: forceFullSync ? '#1976d2' : '#666',
+              fontWeight: '600',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              backgroundColor: forceFullSync ? 'rgba(25, 118, 210, 0.08)' : '#f5f5f5',
+              border: forceFullSync ? '1px solid rgba(25, 118, 210, 0.3)' : '1px solid #ddd',
+              transition: 'all 0.2s ease',
+              opacity: isSyncing ? 0.6 : 1
+            }}>
+              <input
+                type="checkbox"
+                checked={forceFullSync}
+                onChange={(e) => setForceFullSync(e.target.checked)}
+                disabled={isSyncing}
+                style={{ 
+                  cursor: isSyncing ? 'not-allowed' : 'pointer',
+                  accentColor: '#1976d2',
+                  margin: 0
+                }}
+              />
+              Full History
+            </label>
+            <button
+              onClick={handleManualSync}
+              disabled={isSyncing}
+              style={{
+                fontSize: '0.7rem',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: 'none',
+                backgroundColor: isSyncing ? '#f5f5f5' : '#1976d2',
+                cursor: isSyncing ? 'not-allowed' : 'pointer',
+                color: isSyncing ? '#aaa' : '#fff',
+                fontWeight: '700',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: isSyncing ? 'none' : '0 2px 8px rgba(25, 118, 210, 0.2)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <RotateCcw size={12} className={isSyncing ? 'spin' : ''} />
+              {isSyncing ? 'SYNCING...' : 'SYNC'}
+            </button>
+            <button
+              onClick={() => {
+                localStorage.removeItem('bt_token');
+                localStorage.removeItem('bt_userId');
+                window.location.href = '/';
+              }}
+              style={{
+                fontSize: '0.65rem',
+                padding: '5px 10px',
+                borderRadius: '6px',
+                border: '1px solid #ddd',
+                backgroundColor: '#fff',
+                cursor: 'pointer',
+                color: '#666',
+                fontWeight: '600',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Logout
+            </button>
+          </span>
+        </p>
+        <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+          {getAccountLabels().map((item, idx) => (
+            <Box
+              key={`${item.bookie}-${item.username || idx}`}
+              sx={{
+                fontSize: '0.6rem',
+                backgroundColor: '#f0f0f0',
+                px: 1,
+                py: 0.2,
+                borderRadius: '4px',
+                border: '1px solid #ddd',
+                textTransform: 'capitalize',
+                fontWeight: '600',
+                color: '#666'
+              }}
+            >
+              {item.label}
+            </Box>
+          ))}
+          {isLoading && !isSyncing && (
+            <Box sx={{ fontSize: '0.6rem', color: '#1976d2', fontWeight: '600', display: 'flex', alignItems: 'center' }}>
+              Loading...
+            </Box>
+          )}
+          {isSyncing && (
+             <Box sx={{ fontSize: '0.6rem', color: '#2e7d32', fontWeight: '700', display: 'flex', alignItems: 'center', animation: 'pulse 2s infinite' }}>
+               ● Live Syncing...
+             </Box>
+          )}
+        </Box>
+      </div>
+    </div>
+  );
+
+  const FilterPill = ({ label, active, onClick }) => (
+    <span
+      className={`FilterPill ${active ? 'active' : ''}`}
+      onClick={onClick}
+    >
+      {label}
+    </span>
+  );
+
+  return (
+    <div id="Dashboard" style={{ position: 'relative', minHeight: '100vh', transition: 'opacity 0.3s' }}>
+      <User />
+      <Balance amount={profile.balance} />
+
+      <div className="FilterContainer">
+        {bookieOptions.length > 1 && (
+          <div className="FilterSection">
+            <FilterPill
+              label="All Bookies"
+              active={selectedBookie === 'all'}
+              onClick={() => setSelectedBookie('all')}
+            />
+            {bookieOptions.map(b => (
+              <FilterPill
+                key={b}
+                label={b}
+                active={selectedBookie === b}
+                onClick={() => setSelectedBookie(b)}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="FilterSection">
+          {TIME_PERIODS.map(p => (
+            <FilterPill
+              key={p.key}
+              label={p.label}
+              active={selectedTimePeriod === p.key}
+              onClick={() => setSelectedTimePeriod(p.key)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'white', position: 'sticky', top: 0, zIndex: 1000 }}>
         <Tabs
           value={value}
           onChange={handleChange}
           aria-label="dashboard tabs"
+          variant="fullWidth"
           sx={{
-            px: 3,
             '& .MuiTabs-flexContainer': {
-              justifyContent: 'space-evenly'
+              borderBottom: 'none'
             }
           }}
         >
@@ -266,8 +506,10 @@ const Dashboard = ({ activeBookie }) => {
             value={0}
             sx={{
               textTransform: 'none',
-              fontSize: '1rem',
-              fontWeight: value === 0 ? 'bold' : 'normal'
+              fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
+              fontWeight: value === 0 ? '700' : '500',
+              minWidth: 0,
+              px: { xs: 1, sm: 2 }
             }}
           />
           <Tab
@@ -275,8 +517,10 @@ const Dashboard = ({ activeBookie }) => {
             value={1}
             sx={{
               textTransform: 'none',
-              fontSize: '1rem',
-              fontWeight: value === 1 ? 'bold' : 'normal'
+              fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
+              fontWeight: value === 1 ? '700' : '500',
+              minWidth: 0,
+              px: { xs: 1, sm: 2 }
             }}
           />
           <Tab
@@ -284,24 +528,30 @@ const Dashboard = ({ activeBookie }) => {
             value={2}
             sx={{
               textTransform: 'none',
-              fontSize: '1rem',
-              fontWeight: value === 2 ? 'bold' : 'normal'
+              fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
+              fontWeight: value === 2 ? '700' : '500',
+              minWidth: 0,
+              px: { xs: 1, sm: 2 }
             }}
           />
         </Tabs>
       </Box>
 
-      {/* Tab Content */}
-      <TabPanel value={value} index={0}>
-        {value === 0 && <OverviewTab bets={rawBets} />}
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-        {value === 1 && <BettingBehaviorTab bets={rawBets} />}
-      </TabPanel>
-      <TabPanel value={value} index={2}>
-        {value === 2 && <PsychologyTab bets={rawBets} />}
-      </TabPanel>
-
+      {(isLoading || isSyncing) ? (
+        <DiceLoader />
+      ) : (
+        <>
+          <TabPanel value={value} index={0}>
+            {value === 0 && <OverviewTab bets={filteredBets} isSyncing={isSyncing} />}
+          </TabPanel>
+          <TabPanel value={value} index={1}>
+            {value === 1 && <BettingBehaviorTab bets={filteredBets} isSyncing={isSyncing} />}
+          </TabPanel>
+          <TabPanel value={value} index={2}>
+            {value === 2 && <PsychologyTab bets={filteredBets} isSyncing={isSyncing} />}
+          </TabPanel>
+        </>
+      )}
 
     </div>
   );

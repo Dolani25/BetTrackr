@@ -71,7 +71,7 @@ const EnhancedDashboard = ({ onLogout }) => {
                 Your Balance
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                {formatCurrency(82737573.76)}
+                {formatCurrency(Number(localStorage.getItem('bt_balance') || 0))}
               </Typography>
             </Box>
             
@@ -85,8 +85,8 @@ const EnhancedDashboard = ({ onLogout }) => {
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
                 What's Up,
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                Dolani
+              <Typography variant="body1" sx={{ fontWeight: 'bold', textTransform: 'capitalize' }}>
+                {localStorage.getItem('bt_nickname') || 'Guest'}
               </Typography>
             </Box>
             

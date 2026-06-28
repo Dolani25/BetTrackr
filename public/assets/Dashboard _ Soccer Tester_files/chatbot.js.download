@@ -1,0 +1,279 @@
+let conversation = [];
+
+async function loadConversationHistory(bubble = 'true') {
+    try {
+
+        conversation = [];
+
+        if (bubble == 'true') {
+            showLoadingBubble(); 
+        }
+
+        const url = `/chatbot/LoadHistory`;
+        const response = await fetch(url, {
+            method: 'GET', 
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load conversation history');
+        }
+
+        const data = await response.json();
+
+        if (data.length > 0) {
+            conversation.push(...data);  
+        }
+
+        if (bubble == 'true') {
+            hideLoadingBubble(); 
+        }
+        displayConversation();  
+
+    } catch (error) {
+        if (bubble == 'true') {
+            hideLoadingBubble(); 
+        }
+        console.error('Error loading conversation history:', error);
+    }
+}
+
+async function sendMessage() {
+    const messageInput = document.getElementById('message');
+    const message = messageInput.value;
+    const chatWindow = document.getElementById('chat-window');
+
+    if (message.trim() === '') return;
+
+    const userMessageDiv = document.createElement('div');
+    userMessageDiv.classList.add('chat-message', 'user-message');
+    userMessageDiv.innerText = message;
+    chatWindow.appendChild(userMessageDiv);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    conversation.push({ content: message, role: 'user' });
+
+    messageInput.value = '';
+
+    showLoadingBubble();
+
+    try {
+
+        /*
+        if (message.toLowerCase().includes('human') || message.toLowerCase().includes('operator') || message.toLowerCase().includes('refund')) {
+
+            if ((premium == 'true') || (smartsupp_load == 'true')) {
+
+                hideLoadingBubble();
+                const botMessageDiv = document.createElement('div');
+                botMessageDiv.classList.add('chat-message', 'bot-message');
+                botMessageDiv.innerText = 'I\'m handing over to a Human. Please Wait.';
+                chatWindow.appendChild(botMessageDiv);
+
+                setTimeout(function() {
+                    document.getElementById('chatContainer').style.display = 'none';
+                    document.getElementById('openChatButton').style.display = 'block';
+                    smartsupp('chat:open');
+                }, 5000);
+
+                return;
+            }
+        }
+        */
+
+        let minimizedConv = getLastMessages(conversation)
+
+        const response = await fetch('/chatbot/SendMessage', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({
+                messages: minimizedConv
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message);
+        }
+
+        const data = await response.json();
+
+        hideLoadingBubble();
+
+        if (data && data.text) {
+           
+            const converter = new showdown.Converter();
+            const html = converter.makeHtml(data.text);
+
+            const botMessageDiv = document.createElement('div');
+            botMessageDiv.classList.add('chat-message', 'bot-message');
+            botMessageDiv.innerHTML = html;  
+            chatWindow.appendChild(botMessageDiv);
+
+            conversation.push({ content: data.text, role: 'assistant' });
+        } else {
+
+            const botMessageDiv = document.createElement('div');
+            botMessageDiv.classList.add('chat-message', 'bot-message');
+            botMessageDiv.innerHTML = 'Sorry, it seems that I don\'t have access to this information. <br />Try to clear the conversation history by clicking <a href="#" onclick="clearHistory()">here</a> if the issue persist.';
+            chatWindow.appendChild(botMessageDiv);
+        }
+
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    } catch (error) {
+        //console.error('Error sending message to chatbot:', error);
+
+        hideLoadingBubble();
+
+        const botMessageDiv = document.createElement('div');
+        botMessageDiv.classList.add('chat-message', 'bot-message');
+        botMessageDiv.innerHTML = 'Sorry, it seems there is an error somewhere in my configuration, but it will be resolved soon. <br />Try to clear the conversation history by clicking <a href="#" onclick="clearHistory()">here</a> if the issue persist.';
+        chatWindow.appendChild(botMessageDiv);
+    }
+}
+
+async function clearHistory() {
+
+    const response = await fetch('/chatbot/ClearConversation', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({}),
+    });
+
+    const data = await response.json();
+
+    loadConversationHistory()
+}
+
+function displayConversation() {
+    const chatWindow = document.getElementById('chat-window');
+    chatWindow.innerHTML = ''; 
+
+    if (conversation.length === 0) {
+
+        const converter = new showdown.Converter();
+        const html = converter.makeHtml('Hi! \nI\'m the **AI chatbot**.  \n\nFeel free to ask me any questions you have. I’ll do my best to provide the answers you need.  \n\nI\'m here to assist you every step of the way, so don\'t hesitate to start a conversation!  \n\n*Keep in mind that I can make mistakes and that I\'m always learning*.');
+        const welcomeMessage = document.createElement('div');
+        welcomeMessage.classList.add('chat-message', 'bot-message');
+        welcomeMessage.innerHTML = html;
+        chatWindow.appendChild(welcomeMessage);
+    } else {
+        const converter = new showdown.Converter();
+        
+        conversation.forEach((msg) => {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-message', msg.role === 'user' ? 'user-message' : 'bot-message');
+
+            if (msg.role === 'assistant') {
+                messageDiv.innerHTML = converter.makeHtml(msg.content);
+            } else {
+                messageDiv.innerText = msg.content;
+            }
+            chatWindow.appendChild(messageDiv);
+        });
+    }
+
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+
+function showLoadingBubble() {
+    const chatWindow = document.getElementById('chat-window');
+
+    const loadingDiv = document.createElement('div');
+    loadingDiv.classList.add('chat-message', 'bot-message');
+    loadingDiv.innerHTML = '<span class="loading-dots"></span>';
+
+    chatWindow.appendChild(loadingDiv);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+function hideLoadingBubble() {
+    const chatWindow = document.getElementById('chat-window');
+    const loadingDiv = chatWindow.querySelector('.loading-dots');
+
+    if (loadingDiv) {
+        loadingDiv.parentElement.remove();
+    }
+}
+
+function setCookie(name, value, days) {
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
+function getCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+
+function checkCookie(name) {
+    return getCookie(name) !== null;
+}
+
+function switchSupport() {
+
+    if (smartsupp_load == 'false') { messageAuto(); }
+    else {
+
+        showLoadingBubble()
+
+        setTimeout(function() {
+            smartsupp('chat:open');
+            closeChat(); 
+            hideLoadingBubble();
+        }, 3000);
+    }
+}
+
+function messageAuto() {
+
+    showLoadingBubble()
+
+    setTimeout(function() {
+
+        hideLoadingBubble();
+
+        let defaultMsg = 'Our support team is available from Monday to Friday, 7AM to 4PM UTC.<br /><br />In the meantime, feel free to ask our AI Chatbot for assistance, it might have the answer you need! <br /><br />Rest assured, we are always monitoring the health of our services to ensure everything runs smoothly.';
+
+        if (typeof smartsupp_desactivated !== 'undefined') {
+            if (smartsupp_desactivated == 'true') {
+                defaultMsg = 'All our agents are currently unavailable. We’ll be back with you shortly!<br /><br />In the meantime, feel free to ask our AI Chatbot for assistance, it might have the answer you need! <br /><br />Rest assured, we are always monitoring the health of our services to ensure everything runs smoothly.';
+            }
+        }
+
+        const chatWindow = document.getElementById('chat-window');
+        const botMessageDiv = document.createElement('div');
+        botMessageDiv.classList.add('chat-message', 'bot-message');
+        botMessageDiv.innerHTML = defaultMsg ;
+        chatWindow.appendChild(botMessageDiv);
+
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }, 2000);
+}
+
+function getLastMessages(messages, count = 15) {
+    return messages.slice(-count);
+}
+
+
