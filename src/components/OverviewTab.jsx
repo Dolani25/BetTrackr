@@ -6,7 +6,7 @@ import {
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { Box, Typography, Grid, Card, CardContent, Tooltip as MuiTooltip, useTheme, useMediaQuery, Chip } from '@mui/material';
-import { TrendingUp, TrendingDown, Target, DollarSign, Calendar, Trophy, History, Scale, Calculator, Landmark, Percent, Coins, Scissors, HelpCircle, Zap, Wallet } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, DollarSign, Calendar, Trophy, History, Scale, Calculator, Landmark, Percent, Coins, Scissors, HelpCircle, Zap, Wallet, Play, Pause } from 'lucide-react';
 import { FaArrowUp, FaPercent, FaHandHoldingUsd, FaArrowDown, FaCheck } from "react-icons/fa";
 import TimeSeriesChart from '../TimeSeriesChart';
 import { sanitizeChartData } from '../utils/chartUtils';
@@ -73,6 +73,36 @@ const ClickableInfoTooltip = ({ title, content, children, color = 'inherit', ico
 const OverviewTab = ({ bets = [], isSyncing = false }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [visibleDataCount, setVisibleDataCount] = React.useState(Number.MAX_SAFE_INTEGER);
+  const maxDataLen = bets.length;
+
+  React.useEffect(() => {
+    let interval;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setVisibleDataCount(prev => {
+          if (prev + 1 >= maxDataLen) {
+            setIsPlaying(false);
+            return maxDataLen;
+          }
+          return prev + 1;
+        });
+      }, 50);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, maxDataLen]);
+
+  const togglePlay = (maxLen) => {
+    if (isPlaying) {
+      setIsPlaying(false);
+    } else {
+      if (visibleDataCount >= maxLen) {
+        setVisibleDataCount(1);
+      }
+      setIsPlaying(true);
+    }
+  };
 
   // --- CALCULATE METRICS FROM REAL DATA ---
   const cleanNumber = (val) => {
@@ -698,7 +728,7 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
       <Box sx={{ mt: 4 }}>
 
         {/* Line Chart */}
-        <div style={{ marginBottom: "3vmin", fontFamily: "Playfair Display", paddingTop: "3vmin", borderRadius: "6px", backgroundImage: "linear-gradient(to top, #0ba360 0%, #3cba92 100%)", height: "auto", minHeight: "300px", width: "100%", maxWidth: "none", overflowX: "hidden", overflowY: "hidden", padding: "20px", boxSizing: "border-box" }}>
+        <div style={{ position: "relative", marginBottom: "3vmin", fontFamily: "Playfair Display", paddingTop: "3vmin", borderRadius: "6px", backgroundImage: "linear-gradient(to top, #0ba360 0%, #3cba92 100%)", height: "auto", minHeight: "300px", width: "100%", maxWidth: "none", overflowX: "hidden", overflowY: "hidden", padding: "20px 20px 20px 5px", boxSizing: "border-box" }}>
           <Box sx={{ mb: 2, ml: 2 }}>
             <ClickableInfoTooltip 
               title={<p style={{ marginBottom: "2vmin", fontWeight: "600", color: "#fff", fontSize: isMobile ? "14px" : "16px", textTransform: "uppercase" }}>Profit Line Chart</p>} 
@@ -712,11 +742,11 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
             />
           </Box>
             <ResponsiveContainer width="100%" height={isMobile ? 200 : 250}>
-              <LineChart data={cumulativePLData.length > 0 ? cumulativePLData : [{ name: 'No Data', value: 0 }]} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+              <LineChart data={cumulativePLData.length > 0 ? cumulativePLData.slice(0, visibleDataCount) : [{ name: 'No Data', value: 0 }]} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                 <defs>
                   <linearGradient id="colorCum" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset={offC} stopColor="#4CAF50" stopOpacity={1}/>
-                    <stop offset={offC} stopColor="#F44336" stopOpacity={1}/>
+                    <stop offset={offC} stopColor="#ffffff" stopOpacity={1}/>
+                    <stop offset={offC} stopColor="#ff4d4f" stopOpacity={1}/>
                   </linearGradient>
                 </defs>
                 <Line type="monotone" dataKey="value" stroke="url(#colorCum)" strokeWidth={isMobile ? 2 : 3} dot={false} />
@@ -759,6 +789,33 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
                 />
               </LineChart>
             </ResponsiveContainer>
+            
+            {/* Play/Pause Button */}
+            <button
+              onClick={() => togglePlay(cumulativePLData.length)}
+              style={{
+                position: 'absolute',
+                bottom: '10px',
+                left: '10px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#ffffff',
+                transition: 'all 0.2s',
+                zIndex: 10
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'}
+              title={isPlaying ? "Pause Animation" : "Play Animation"}
+            >
+              {isPlaying ? <Pause size={18} fill="#ffffff" /> : <Play size={18} fill="#ffffff" />}
+            </button>
           </div>
 
 
@@ -853,33 +910,6 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
             </div>
           </div>
 
-        <div style={{
-          marginTop: "3vmin",
-          marginBottom: "3vmin",
-          fontFamily: "Playfair Display",
-          paddingTop: "3vmin",
-          borderRadius: "6px",
-          backgroundImage: "linear-gradient(to top, #667eea 0%, #764ba2 100%)",
-          height: "auto",
-          minHeight: "350px",
-          width: "100%",
-          maxWidth: "none",
-          overflowX: "hidden",
-          overflowY: "hidden",
-          padding: "20px",
-          boxSizing: "border-box"
-        }}>
-          <Box sx={{ mb: 2, ml: 2 }}>
-            <ClickableInfoTooltip 
-              title={<p style={{ marginBottom: "2vmin", fontWeight: "600", color: "#ffffff", fontSize: "16px", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>Time Series Chart</p>} 
-              content={<Typography variant="caption">Individual bet performance over time.</Typography>} 
-              color="#fff"
-            />
-          </Box>
-          <TimeSeriesChart data={timeSeriesData.length > 0 ? timeSeriesData : [
-            { timestamp: new Date().toISOString(), value: 0 }
-          ]} />
-        </div>
       </Box>
     </Box>
   );
