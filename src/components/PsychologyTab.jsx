@@ -2,7 +2,7 @@
 import React from 'react';
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Label, Cell
 } from 'recharts';
 import { sanitizeChartData } from '../utils/chartUtils';
 import { Box, Typography, Grid, Card, CardContent, LinearProgress, Chip, Tooltip as MuiTooltip, useTheme, useMediaQuery } from '@mui/material';
@@ -385,7 +385,7 @@ const PsychologyTab = ({ bets = [], isSyncing = false }) => {
           title="Tilt Risk"
           value={tiltDetectionData.some(d => d.betsPerHour > 10) ? "High" : "Low"}
           icon={AlertTriangle}
-          color="#FF9800"
+          color={tiltDetectionData.some(d => d.betsPerHour > 10) ? "#d32f2f" : "#2e7d32"}
           description="Based on betting frequency spikes"
           content={
             <Box sx={{ p: 1 }}>
@@ -399,7 +399,7 @@ const PsychologyTab = ({ bets = [], isSyncing = false }) => {
           title="Discipline Score"
           value={`${overallDisciplineScore}/100`}
           icon={Shield}
-          color="#4CAF50"
+          color={overallDisciplineScore >= 70 ? "#2e7d32" : overallDisciplineScore >= 50 ? "#9e9e9e" : "#d32f2f"}
           description="Overall rule adherence rating"
           content={
             <Box sx={{ p: 1 }}>
@@ -412,7 +412,7 @@ const PsychologyTab = ({ bets = [], isSyncing = false }) => {
           title="Emotional Control"
           value={`${Math.round(emotionalControlScore)}%`}
           icon={Brain}
-          color="#1976d2"
+          color={emotionalControlScore >= 70 ? "#2e7d32" : emotionalControlScore >= 50 ? "#9e9e9e" : "#d32f2f"}
           description="Consistency in decision making"
           content={
             <Box sx={{ p: 1 }}>
@@ -438,11 +438,17 @@ const PsychologyTab = ({ bets = [], isSyncing = false }) => {
               } 
             />
             <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
-              <AreaChart data={sanitizeChartData(tiltDetectionData)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={sanitizeChartData(tiltDetectionData)} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis yAxisId="left" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <XAxis dataKey="date" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Date" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis yAxisId="left" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Bets per Hour" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Avg Stake (₦)" angle={90} position="insideRight" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip contentStyle={{ fontSize: '12px' }} />
                 <Legend 
                   wrapperStyle={{ paddingTop: '10px' }}
@@ -462,7 +468,7 @@ const PsychologyTab = ({ bets = [], isSyncing = false }) => {
                   yAxisId="right"
                   type="monotone"
                   dataKey="avgStake"
-                  stroke="#4ECDC4"
+                  stroke="#1976d2"
                   strokeWidth={isMobile ? 2 : 3}
                   name="Avg Stake (₦)"
                 />
@@ -514,10 +520,14 @@ const PsychologyTab = ({ bets = [], isSyncing = false }) => {
               } 
             />
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={sanitizeChartData(revengeBettingData)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={sanitizeChartData(revengeBettingData)} margin={{ top: 10, right: 10, left: -10, bottom: 20 }} barSize={isMobile ? 30 : 50}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="session" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <XAxis dataKey="session" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Betting Session" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Loss Amount (₦)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip 
                   formatter={(value) => [`₦${Math.abs(value)} `, '']} 
                   contentStyle={{ fontSize: '12px' }}
@@ -546,10 +556,14 @@ const PsychologyTab = ({ bets = [], isSyncing = false }) => {
               } 
             />
             <ResponsiveContainer width="100%" height={250}>
-              <AreaChart data={sanitizeChartData(confidenceTrendData)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={sanitizeChartData(confidenceTrendData)} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="confidence" name="Confidence" unit="/10" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} unit="%" formatter={(val) => Math.round(val * 100)} />
+                <XAxis dataKey="confidence" name="Confidence" unit="/10" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Confidence Level (1-10)" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} unit="%">
+                  <Label value="Win Rate (%)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip
                   formatter={(value) => [`${Math.round(value * 100)}%`, 'Win Rate']}
                   contentStyle={{ fontSize: '12px' }}
@@ -580,10 +594,14 @@ const PsychologyTab = ({ bets = [], isSyncing = false }) => {
               } 
             />
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={sanitizeChartData(overconfidenceData)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <LineChart data={sanitizeChartData(overconfidenceData)} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="streak" name="Win Streak" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <XAxis dataKey="streak" name="Win Streak" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Win Streak (Count)" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Avg Bet Size (₦)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip 
                   formatter={(value) => [`₦${value} `, 'Avg Bet Size']} 
                   contentStyle={{ fontSize: '12px' }}
@@ -613,16 +631,26 @@ const PsychologyTab = ({ bets = [], isSyncing = false }) => {
               } 
             />
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={sanitizeChartData(emotionalStateData)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={sanitizeChartData(emotionalStateData)} margin={{ top: 10, right: 10, left: -10, bottom: 20 }} barSize={isMobile ? 30 : 50}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="state" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <XAxis dataKey="state" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Emotional State" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Win Rate (%)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip contentStyle={{ fontSize: '12px' }} />
                 <Legend 
                   wrapperStyle={{ paddingTop: '10px' }}
                   formatter={(value) => <span style={{ fontSize: isMobile ? '10px' : '12px' }}>{value}</span>}
                 />
-                <Bar dataKey="winRate" fill="#4ECDC4" name="Win Rate %" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="winRate" name="Win Rate %" radius={[4, 4, 0, 0]}>
+                  {
+                    sanitizeChartData(emotionalStateData).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.winRate >= 50 ? '#2e7d32' : '#d32f2f'} />
+                    ))
+                  }
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -636,6 +664,7 @@ const PsychologyTab = ({ bets = [], isSyncing = false }) => {
               content={
                 <Box sx={{ p: 1 }}>
                   <Typography variant="caption" display="block">Qualitative assessment of common cognitive biases.</Typography>
+                  <BlockMath math={"S_{bias} \\in [0, 10]"} />
                   <Typography variant="caption" display="block">Each item displays description and severity 0–10.</Typography>
                 </Box>
               } 

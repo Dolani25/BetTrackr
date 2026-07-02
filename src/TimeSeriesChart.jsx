@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Label
 } from "recharts";
+import { Play, Pause } from "lucide-react";
 
 const TimeSeriesChart = ({ data }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -44,6 +45,11 @@ const TimeSeriesChart = ({ data }) => {
   };
   const isShortSpan = getTimeSpan() < 24 * 60 * 60 * 1000;
 
+  const currentData = data.slice(0, currentIndex + 1);
+  const tsMax = Math.max(...currentData.map(d => d.value), 0);
+  const tsMin = Math.min(...currentData.map(d => d.value), 0);
+  const offTs = tsMax <= 0 ? 0 : tsMin >= 0 ? 1 : tsMax / (tsMax - tsMin);
+
   return (
     <div>
       <ResponsiveContainer width="100%" height={400}>
@@ -60,12 +66,16 @@ const TimeSeriesChart = ({ data }) => {
             tick={{ fill: '#ffffff', fontSize: 12 }}
             axisLine={{ stroke: '#ffffff', opacity: 0.5 }}
             tickLine={{ stroke: '#ffffff', opacity: 0.5 }}
-          />
+          >
+            <Label value="Time" offset={-5} position="insideBottom" style={{ fontSize: 12, fill: '#ffffff', opacity: 0.8 }} />
+          </XAxis>
           <YAxis 
             tick={{ fill: '#ffffff', fontSize: 12 }}
             axisLine={{ stroke: '#ffffff', opacity: 0.5 }}
             tickLine={{ stroke: '#ffffff', opacity: 0.5 }}
-          />
+          >
+            <Label value="Profit/Loss (₦)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: 12, fill: '#ffffff', opacity: 0.8 }} />
+          </YAxis>
           <Tooltip 
             labelFormatter={(label) => new Date(label).toLocaleString()}
             formatter={(value) => [
@@ -83,37 +93,44 @@ const TimeSeriesChart = ({ data }) => {
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }}
           />
-          <Line type="monotone" dataKey="value" stroke="#ffffff" strokeWidth={3} dot={{ fill: '#ffffff', strokeWidth: 2, r: 4 }} />
+          <defs>
+            <linearGradient id="colorTs" x1="0" y1="0" x2="0" y2="1">
+              <stop offset={offTs} stopColor="#4CAF50" stopOpacity={1}/>
+              <stop offset={offTs} stopColor="#F44336" stopOpacity={1}/>
+            </linearGradient>
+          </defs>
+          <Line type="monotone" dataKey="value" stroke="url(#colorTs)" strokeWidth={3} dot={false} />
         </LineChart>
       </ResponsiveContainer>
       
       <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
         <button 
           onClick={isPlaying ? pauseAnimation : startAnimation}
+          title={isPlaying ? "Pause" : "Play"}
           style={{
             backgroundColor: "#ffffff",
             color: "#667eea",
-            border: "2px solid #667eea",
-            borderRadius: "8px",
-            padding: "10px 20px",
-            fontSize: "14px",
-            fontWeight: "600",
+            border: "none",
+            borderRadius: "50%",
+            width: "40px",
+            height: "40px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             cursor: "pointer",
             transition: "all 0.3s ease",
-            textTransform: "uppercase",
-            letterSpacing: "1px",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)"
           }}
           onMouseOver={(e) => {
-            e.target.style.backgroundColor = "#667eea";
-            e.target.style.color = "#ffffff";
+            e.currentTarget.style.backgroundColor = "#667eea";
+            e.currentTarget.style.color = "#ffffff";
           }}
           onMouseOut={(e) => {
-            e.target.style.backgroundColor = "#ffffff";
-            e.target.style.color = "#667eea";
+            e.currentTarget.style.backgroundColor = "#ffffff";
+            e.currentTarget.style.color = "#667eea";
           }}
         >
-          {isPlaying ? "Pause" : "Play"}
+          {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" style={{ marginLeft: "2px" }} />}
         </button>
       </div>
     </div>

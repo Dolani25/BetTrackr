@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   BarChart, Bar, LineChart, Line, ScatterChart, Scatter, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label
 } from 'recharts';
 import { Box, Typography, Grid, Card, CardContent, Tooltip as MuiTooltip, useMediaQuery, useTheme, Chip } from '@mui/material';
 import { BlockMath, InlineMath } from 'react-katex';
@@ -117,15 +117,15 @@ const BettingBehaviorTab = ({ bets, isSyncing = false }) => {
   });
 
   // 2. STAKE DISTRIBUTION
-  const stakeBuckets = { '₦10-25': { count: 0, wins: 0 }, '₦25-50': { count: 0, wins: 0 }, '₦50-100': { count: 0, wins: 0 }, '₦100-250': { count: 0, wins: 0 }, '₦250+': { count: 0, wins: 0 } };
+  const stakeBuckets = { '10-25': { count: 0, wins: 0 }, '25-50': { count: 0, wins: 0 }, '50-100': { count: 0, wins: 0 }, '100-250': { count: 0, wins: 0 }, '250+': { count: 0, wins: 0 } };
   safeBets.forEach(b => {
     const s = cleanNumber(b.Stake);
     const won = b.Status && b.Status.toLowerCase().includes('won');
-    let key = '₦250+';
-    if (s < 25) key = '₦10-25';
-    else if (s < 50) key = '₦25-50';
-    else if (s < 100) key = '₦50-100';
-    else if (s < 250) key = '₦100-250';
+    let key = '250+';
+    if (s < 25) key = '10-25';
+    else if (s < 50) key = '25-50';
+    else if (s < 100) key = '50-100';
+    else if (s < 250) key = '100-250';
 
     stakeBuckets[key].count++;
     if (won) stakeBuckets[key].wins++;
@@ -251,7 +251,7 @@ const BettingBehaviorTab = ({ bets, isSyncing = false }) => {
     const maxBets = Math.max(...timeHeatmapData.map(d => d.bets)) || 1;
 
     return (
-      <Box sx={{ p: { xs: 0, sm: 2 }, width: '100%', overflowX: 'hidden' }}>
+      <Box sx={{ p: { xs: 0, sm: 2 }, width: '90%', maxWidth: { xs: '90%', sm: 405 }, mx: 'auto', overflowX: 'hidden' }}>
         <Box display="flex" mb={1}>
           <Box sx={{ width: { xs: 35, sm: 60 }, flexShrink: 0 }}></Box>
           {hours.map(hour => (
@@ -270,7 +270,7 @@ const BettingBehaviorTab = ({ bets, isSyncing = false }) => {
                 key={index}
                 sx={{
                   flex: 1,
-                  height: { xs: 25, sm: 35 },
+                  aspectRatio: '1 / 1',
                   margin: 0.25,
                   backgroundColor: value > 0 ? `rgba(25, 118, 210, ${Math.max(0.1, value / maxBets)})` : '#f5f5f5',
                   border: '1px solid #e0e0e0',
@@ -332,9 +332,7 @@ const BettingBehaviorTab = ({ bets, isSyncing = false }) => {
                   <Typography variant="caption" display="block">
                     Shows how many bets you place by day of week and hour.
                   </Typography>
-                  <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 1 }}>
-                    Frequency = Count of bets at Day/Hour
-                  </Typography>
+                  <BlockMath math={"f(d, h) = \\sum_{i} I(\\text{Day}_i = d \\land \\text{Hour}_i = h)"} />
                 </Box>
               }
             />
@@ -433,17 +431,19 @@ const BettingBehaviorTab = ({ bets, isSyncing = false }) => {
                   <Typography variant="caption" display="block">
                     Bars show frequency of stakes in each range; line shows win rate.
                   </Typography>
-                  <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 1 }}>
-                    Win Rate = (Wins / Total Bets) * 100%
-                  </Typography>
+                  <BlockMath math={"\\text{WinRate}_{\\text{bin}} = \\frac{\\text{Wins}_{\\text{bin}}}{\\text{Total}_{\\text{bin}}} \\times 100\\%"} />
                 </Box>
               }
             />
             <ResponsiveContainer width="100%" height={isMobile ? 250 : 320}>
-              <BarChart data={sanitizeChartData(stakeDistributionData)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={sanitizeChartData(stakeDistributionData)} margin={{ top: 10, right: 10, left: -10, bottom: 20 }} barSize={isMobile ? 30 : 50} barCategoryGap="20%">
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="range" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <XAxis dataKey="range" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Amount Range (₦)" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Frequency / Win %" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip
                   contentStyle={{ fontSize: '12px' }}
                   formatter={(value, name) => [name === 'Frequency' ? value : `${value}%`, name]}
@@ -469,17 +469,19 @@ const BettingBehaviorTab = ({ bets, isSyncing = false }) => {
                   <Typography variant="caption" display="block">
                     Tracks current bankroll versus high-water mark over time.
                   </Typography>
-                  <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 1 }}>
-                    Drawdown from peak
-                  </Typography>
+                  <BlockMath math={"\\text{Drawdown}_t = \\frac{\\text{Peak}_{1..t} - \\text{Bankroll}_t}{\\text{Peak}_{1..t}}"} />
                 </Box>
               }
             />
             <ResponsiveContainer width="100%" height={isMobile ? 250 : 320}>
-              <LineChart data={sanitizeChartData(bankrollData)} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <LineChart data={sanitizeChartData(bankrollData)} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="week" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <XAxis dataKey="week" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Time (Batches)" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Bankroll (₦)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip formatter={(value) => [`₦${value}`, '']} contentStyle={{ fontSize: '12px' }} />
                 <Legend
                   wrapperStyle={{ paddingTop: '10px' }}
@@ -516,17 +518,19 @@ const BettingBehaviorTab = ({ bets, isSyncing = false }) => {
                   <Typography variant="caption" display="block">
                     Relationship between your confidence and bet size.
                   </Typography>
-                  <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 1 }}>
-                    Correlation analysis
-                  </Typography>
+                  <BlockMath math={"r = \\frac{\\sum (c_i - \\bar{c})(s_i - \\bar{s})}{\\sqrt{\\sum (c_i - \\bar{c})^2 \\sum (s_i - \\bar{s})^2}}"} />
                 </Box>
               }
             />
             <ResponsiveContainer width="100%" height={isMobile ? 250 : 320}>
-              <ScatterChart data={sanitizeChartData(betSizeConfidenceData)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <ScatterChart data={sanitizeChartData(betSizeConfidenceData)} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="confidence" name="Confidence" unit="/10" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis dataKey="betSize" name="Bet Size" unit="₦" tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <XAxis dataKey="confidence" name="Confidence" unit="/10" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Confidence Level (1-10)" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis dataKey="betSize" name="Bet Size" unit="₦" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Bet Size (₦)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip
                   cursor={{ strokeDasharray: '3 3' }}
                   contentStyle={{ fontSize: '12px' }}
@@ -561,17 +565,19 @@ const BettingBehaviorTab = ({ bets, isSyncing = false }) => {
                   <Typography variant="caption" display="block">
                     Validates the theory: Does higher "confidence" (stake) lead to higher win rates?
                   </Typography>
-                  <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 1 }}>
-                    Target: Positive slope/correlation.
-                  </Typography>
+                  <BlockMath math={"\\text{WinRate}_c = \\frac{\\text{Wins}_c}{\\text{Total}_c} \\times 100\\%"} />
                 </Box>
               }
             />
             <ResponsiveContainer width="100%" height={isMobile ? 250 : 320}>
-              <BarChart data={sanitizeChartData(winRateByConfidenceData)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={sanitizeChartData(winRateByConfidenceData)} margin={{ top: 10, right: 10, left: -10, bottom: 20 }} barSize={isMobile ? 30 : 50}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="confidence" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis unit="%" domain={[0, 100]} tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <XAxis dataKey="confidence" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Confidence Level" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis unit="%" domain={[0, 100]} tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Win Rate (%)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip
                   contentStyle={{ fontSize: '12px' }}
                   formatter={(value) => [`${value}%`, 'Win Rate']}
@@ -592,17 +598,19 @@ const BettingBehaviorTab = ({ bets, isSyncing = false }) => {
                   <Typography variant="caption" display="block">
                     Win rate per market.
                   </Typography>
-                  <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 1 }}>
-                    Win Ratio %
-                  </Typography>
+                  <BlockMath math={"\\text{WinRate}_m = \\frac{\\text{Wins}_m}{\\text{Total}_m} \\times 100\\%"} />
                 </Box>
               }
             />
             <ResponsiveContainer width="100%" height={Math.max(isMobile ? 250 : 320, winRateByMarketData.length * (isMobile ? 25 : 35) + 60)}>
-              <BarChart layout="vertical" data={sanitizeChartData(winRateByMarketData)} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <BarChart layout="vertical" data={sanitizeChartData(winRateByMarketData)} margin={{ top: 5, right: 30, left: 10, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis type="category" dataKey="market" width={isMobile ? 80 : 120} tick={{ fontSize: isMobile ? 9 : 11 }} interval={0} />
+                <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Win Rate (%)" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis type="category" dataKey="market" width={isMobile ? 80 : 120} tick={{ fontSize: isMobile ? 9 : 11 }} interval={0}>
+                  <Label value="Market" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip formatter={(v) => [`${v}%`, 'Win Rate']} contentStyle={{ fontSize: '12px' }} />
                 <Legend
                   wrapperStyle={{ paddingTop: '10px' }}

@@ -1,12 +1,12 @@
 import React from 'react';
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, Label
 } from 'recharts';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { Box, Typography, Grid, Card, CardContent, Tooltip as MuiTooltip, useTheme, useMediaQuery, Chip } from '@mui/material';
-import { TrendingUp, TrendingDown, Target, DollarSign, Calendar, Trophy, History, Scale, Calculator, Landmark, Percent, Coins, Scissors, HelpCircle, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, DollarSign, Calendar, Trophy, History, Scale, Calculator, Landmark, Percent, Coins, Scissors, HelpCircle, Zap, Wallet } from 'lucide-react';
 import { FaArrowUp, FaPercent, FaHandHoldingUsd, FaArrowDown, FaCheck } from "react-icons/fa";
 import TimeSeriesChart from '../TimeSeriesChart';
 import { sanitizeChartData } from '../utils/chartUtils';
@@ -164,11 +164,11 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
 
   // 6. Bet Amount Distribution
   const betAmountDistribution = [
-    { range: '₦10-50', count: bets.filter(b => cleanNumber(b.Stake) >= 10 && cleanNumber(b.Stake) < 50).length },
-    { range: '₦50-100', count: bets.filter(b => cleanNumber(b.Stake) >= 50 && cleanNumber(b.Stake) < 100).length },
-    { range: '₦100-200', count: bets.filter(b => cleanNumber(b.Stake) >= 100 && cleanNumber(b.Stake) < 200).length },
-    { range: '₦200-500', count: bets.filter(b => cleanNumber(b.Stake) >= 200 && cleanNumber(b.Stake) < 500).length },
-    { range: '₦500+', count: bets.filter(b => cleanNumber(b.Stake) >= 500).length }
+    { range: '10-50', count: bets.filter(b => cleanNumber(b.Stake) >= 10 && cleanNumber(b.Stake) < 50).length },
+    { range: '50-100', count: bets.filter(b => cleanNumber(b.Stake) >= 50 && cleanNumber(b.Stake) < 100).length },
+    { range: '100-200', count: bets.filter(b => cleanNumber(b.Stake) >= 100 && cleanNumber(b.Stake) < 200).length },
+    { range: '200-500', count: bets.filter(b => cleanNumber(b.Stake) >= 200 && cleanNumber(b.Stake) < 500).length },
+    { range: '500+', count: bets.filter(b => cleanNumber(b.Stake) >= 500).length }
   ];
 
   // 7. Sport Analysis (Granular Market Analysis)
@@ -249,32 +249,40 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
     };
   });
 
+  const netMax = Math.max(...monthlyPLData.map(d => d.net), 0);
+  const netMin = Math.min(...monthlyPLData.map(d => d.net), 0);
+  const offNet = netMax <= 0 ? 0 : netMin >= 0 ? 1 : netMax / (netMax - netMin);
+
+  const cMax = Math.max(...cumulativePLData.map(d => d.value), 0);
+  const cMin = Math.min(...cumulativePLData.map(d => d.value), 0);
+  const offC = cMax <= 0 ? 0 : cMin >= 0 ? 1 : cMax / (cMax - cMin);
+
   // 9. Time Series Data (for Time Series Chart, showing individual bet P&L)
   const timeSeriesData = sortedBets.map(b => ({
     timestamp: b.Date,
     value: cleanNumber(b.Return) - cleanNumber(b.Stake)
   }));
 
-  const StatCard = ({ title, value, icon: Icon, trend, color = '#1976d2' }) => (
+  const StatCard = ({ title, value, icon: Icon, trend, color = '#1976d2', gradient, description, formula }) => (
     <Card sx={{ 
       height: '100%', 
       borderRadius: '12px',
-      background: `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`, 
+      background: gradient || `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`, 
       border: `1px solid ${color}25`,
       boxShadow: `0 8px 32px -4px ${color}20`,
       transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
       '&:hover': {
         transform: 'translateY(-4px)',
         boxShadow: `0 12px 40px -4px ${color}35`,
-        background: `linear-gradient(135deg, ${color}18 0%, ${color}0a 100%)`, 
+        background: gradient || `linear-gradient(135deg, ${color}18 0%, ${color}0a 100%)`, 
         borderColor: `${color}40`,
       },
       position: 'relative',
       overflow: 'hidden'
     }}>
-      <CardContent sx={{ p: '24px !important' }}>
+      <CardContent sx={{ p: isMobile ? '16px !important' : '24px !important' }}>
         <Box display="flex" justifyContent="space-between" alignItems="start">
-          <Box>
+          <Box sx={{ maxWidth: 'calc(100% - 40px)', wordWrap: 'break-word' }}>
             <ClickableInfoTooltip 
               title={
                 <Typography 
@@ -287,22 +295,27 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
                     display: 'block',
                     mb: 0.5,
                     opacity: 0.6,
-                    fontSize: '0.65rem'
+                    fontSize: isMobile ? '0.55rem' : '0.65rem'
                   }}
                 >
                   {title}
                 </Typography>
               } 
-              content={<Typography variant="caption">{title} Metric</Typography>} 
+              content={
+                <Box sx={{ p: 1 }}>
+                  <Typography variant="caption" display="block">{description || `${title} Metric`}</Typography>
+                  {formula && <BlockMath math={formula} />}
+                </Box>
+              } 
               color="textSecondary"
             />
-            <Typography variant="h4" component="div" sx={{ color: color, fontWeight: '800', lineHeight: 1.1, opacity: 0.9 }}>
+            <Typography variant="h4" component="div" sx={{ color: color, fontWeight: '800', lineHeight: 1.1, opacity: 0.9, fontSize: isMobile ? '1.2rem' : '2.125rem' }}>
               {value}
             </Typography>
           </Box>
           <Box sx={{ 
-            width: 48,
-            height: 48,
+            width: isMobile ? 36 : 48,
+            height: isMobile ? 36 : 48,
             borderRadius: '10px', 
             backgroundColor: `${color}`,
             display: 'flex',
@@ -312,7 +325,7 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
             boxShadow: `0 6px 12px -3px ${color}50`,
             flexShrink: 0
           }}>
-            <Icon size={24} strokeWidth={2} />
+            <Icon size={isMobile ? 18 : 24} strokeWidth={2} />
           </Box>
         </Box>
         {/* Subtle background abstract shape */}
@@ -333,7 +346,7 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
   );
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ width: '100%', mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5">
           Dashboard Overview
@@ -349,12 +362,52 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
         )}
       </Box>
       {/* KPI Cards */}
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
-      <StatCard title="Total Bets" value={totalBets.toLocaleString()} icon={Target} color="#1976d2" />
-      <StatCard title="Win Rate" value={`${winRate}%`} icon={Trophy} color="#4CAF50" />
-      <StatCard title="Total P&L" value={`₦${totalPL.toLocaleString()}`} icon={DollarSign} color={totalPL >= 0 ? "#4CAF50" : "#F44336"} />
-      <StatCard title="Avg Bet Amount" value={`₦${Number(avgBet).toLocaleString()}`} icon={DollarSign} color="#9C27B0" />
-    </Box>
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+          <StatCard 
+            title="Total Bets" 
+            value={totalBets.toLocaleString()} 
+            icon={Target} 
+            color="#2563eb"
+            gradient="linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)"
+            description="The total number of bets placed."
+            formula={"N = \\sum_{i=1}^{n} 1"}
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+          <StatCard 
+            title="Win Rate" 
+            value={`${winRate}%`} 
+            icon={Trophy} 
+            color={parseFloat(winRate) >= 50 ? "#16a34a" : "#475569"} 
+            gradient={parseFloat(winRate) >= 50 ? "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)" : "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)"}
+            description="Percentage of bets won."
+            formula={"\\text{WinRate} = \\frac{\\text{Wins}}{N} \\times 100\\%"}
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+          <StatCard 
+            title="Total P&L" 
+            value={`₦${totalPL.toLocaleString()}`} 
+            icon={Landmark} 
+            color={totalPL >= 0 ? "#16a34a" : "#e11d48"} 
+            gradient={totalPL >= 0 ? "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)" : "linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%)"}
+            description="Net profit or loss across all bets."
+            formula={"\\text{P\\&L} = \\sum_{i=1}^{N} (\\text{Return}_i - \\text{Stake}_i)"}
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+          <StatCard 
+            title="Avg Bet Amount" 
+            value={`₦${Number(avgBet).toLocaleString()}`} 
+            icon={Wallet} 
+            color="#9333ea" 
+            gradient="linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)"
+            description="The average stake placed per bet."
+            formula={"\\text{AvgBet} = \\frac{\\sum_{i=1}^{N} \\text{Stake}_i}{N}"}
+          />
+        </Grid>
+      </Grid>
 
       {/* Charts Section */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -363,13 +416,22 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
           <CardContent>
             <ClickableInfoTooltip 
               title={<Typography variant="h6" gutterBottom>Monthly Profit & Loss</Typography>} 
-              content={<Typography variant="caption">Net performance aggregated by month.</Typography>} 
+              content={
+                <Box sx={{ p: 1 }}>
+                  <Typography variant="caption" display="block">Net performance aggregated by month.</Typography>
+                  <BlockMath math={"\\text{P\\&L}_{m} = \\sum_{i \\in m} (\\text{Return}_i - \\text{Stake}_i)"} />
+                </Box>
+              } 
             />
             <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
-              <AreaChart data={sanitizeChartData(monthlyPLData)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={sanitizeChartData(monthlyPLData)} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <XAxis dataKey="month" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Month" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Net P&L (₦)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip 
                   formatter={(value) => [`₦${value.toLocaleString()}`, '']} 
                   contentStyle={{ fontSize: '12px' }}
@@ -378,7 +440,13 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
                   wrapperStyle={{ paddingTop: '10px' }}
                   formatter={(value) => <span style={{ fontSize: isMobile ? '10px' : '12px' }}>{value}</span>}
                 />
-                <Area type="monotone" dataKey="net" stroke="#1976d2" fill="#1976d2" fillOpacity={0.3} name="Net P&L" />
+                <defs>
+                  <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset={offNet} stopColor="#4CAF50" stopOpacity={0.8}/>
+                    <stop offset={offNet} stopColor="#F44336" stopOpacity={0.8}/>
+                  </linearGradient>
+                </defs>
+                <Area type="monotone" dataKey="net" stroke="url(#colorNet)" fill="url(#colorNet)" name="Net P&L" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -389,13 +457,22 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
           <CardContent>
             <ClickableInfoTooltip 
               title={<Typography variant="h6" gutterBottom>Bet Amount Distribution</Typography>} 
-              content={<Typography variant="caption">Frequency of bets within specific stake ranges.</Typography>} 
+              content={
+                <Box sx={{ p: 1 }}>
+                  <Typography variant="caption" display="block">Frequency of bets within specific stake ranges.</Typography>
+                  <BlockMath math={"f(\\text{bin}_k) = \\sum_{i} I(\\text{Stake}_i \\in \\text{bin}_k)"} />
+                </Box>
+              } 
             />
             <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
-              <BarChart data={sanitizeChartData(betAmountDistribution)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={sanitizeChartData(betAmountDistribution)} margin={{ top: 10, right: 10, left: -10, bottom: 20 }} barSize={isMobile ? 30 : 50} barCategoryGap="20%">
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="range" tick={{ fontSize: isMobile ? 10 : 12 }} />
-                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} />
+                <XAxis dataKey="range" tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Amount Range (₦)" offset={-15} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </XAxis>
+                <YAxis tick={{ fontSize: isMobile ? 10 : 12 }}>
+                  <Label value="Number of Bets" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                </YAxis>
                 <Tooltip contentStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="count" fill="#8884d8" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -408,7 +485,13 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
           <CardContent>
             <ClickableInfoTooltip 
               title={<Typography variant="h6" gutterBottom>Market Analysis: Sport Performance</Typography>} 
-              content={<Typography variant="caption">Analysis of your volume and profitability across different sports.</Typography>} 
+              content={
+                <Box sx={{ p: 1 }}>
+                  <Typography variant="caption" display="block">Analysis of your volume and profitability across different sports.</Typography>
+                  <BlockMath math={"\\text{Volume}_s = \\sum_{i \\in s} \\text{Stake}_i"} />
+                  <BlockMath math={"\\text{P\\&L}_s = \\sum_{i \\in s} (\\text{Return}_i - \\text{Stake}_i)"} />
+                </Box>
+              } 
             />
             <Typography variant="body2" color="textSecondary" gutterBottom>Breakdown by Sport Volume & Profit</Typography>
             <Grid container spacing={2}>
@@ -441,7 +524,7 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
               <Grid size={{ xs: 12, md: 6 }}>
                 <Typography variant="subtitle2" align="center">Profit/Loss by Sport</Typography>
                 <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
-                  <BarChart data={sanitizeChartData(sportAnalysisData)} margin={{ top: 10, right: 10, left: isMobile ? -30 : -20, bottom: 20 }}>
+                  <BarChart data={sanitizeChartData(sportAnalysisData)} margin={{ top: 10, right: 10, left: isMobile ? -20 : -10, bottom: 30 }} barSize={isMobile ? 25 : 40}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis 
                       dataKey="sport" 
@@ -449,8 +532,12 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
                       interval={0}
                       angle={isMobile ? -45 : 0}
                       textAnchor={isMobile ? 'end' : 'middle'}
-                    />
-                    <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} />
+                    >
+                      <Label value="Sport" offset={-25} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                    </XAxis>
+                    <YAxis tick={{ fontSize: isMobile ? 10 : 12 }}>
+                      <Label value="Profit (₦)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#666' }} />
+                    </YAxis>
                     <Tooltip 
                       formatter={(value) => [`₦${value.toLocaleString()}`, 'P&L']} 
                       contentStyle={{ fontSize: '12px' }}
@@ -470,119 +557,141 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
       </Box>
 
       {/* Custom Cards */}
-      <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ mt: 4 }}>
+        <Grid container spacing={2}>
+          {/* Staked Card */}
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+            <div className="Card" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%', boxSizing: 'border-box', backgroundImage: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)" }}>
+              <span>
+                <ClickableInfoTooltip 
+                  title={<p style={{ textTransform: "uppercase" }}>STAKED</p>} 
+                  content={
+                    <Box sx={{ p: 1 }}>
+                      <Typography variant="caption" display="block">Win rate vs Profitability across sports.</Typography>
+                      <BlockMath math={"\\text{ROI}_s = \\frac{\\text{P\\&L}_s}{\\text{Volume}_s} \\times 100\\%"} />
+                    </Box>
+                  } 
+                  color="#94a3b8"
+                  iconSize={12}
+                />
+                <h3>₦{totalStake.toLocaleString()}</h3>
+              </span>
+              <div className="CardIcon"><Coins color="#0284c7" /></div>
+            </div>
+          </Grid>
 
-        {/* Staked Card */}
-        <div className="Card" style={{ width: '100%', backgroundImage: "linear-gradient(to right top, #50c9c3, #64cec9, #76d4cf, #86d9d4, #96deda)" }}>
-          <span>
-            <ClickableInfoTooltip 
-              title={<p style={{ textTransform: "uppercase" }}>STAKED</p>} 
-              content={<Typography variant="caption">Total amount staked across all bets.</Typography>} 
-              color="#fff"
-              iconSize={12}
-            />
-            <h3>₦{totalStake.toLocaleString()}</h3>
-          </span>
-          <div className="CardIcon"><Coins color="#50c9c3" /></div>
-        </div>
+          {/* Last Win Card */}
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+            <div className="Card" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%', boxSizing: 'border-box', backgroundImage: "linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)" }}>
+              <span>
+                <ClickableInfoTooltip 
+                  title={<p style={{ textTransform: "uppercase" }}>LAST WIN</p>} 
+                  content={<Typography variant="caption">Amount from your most recent winning bet.</Typography>} 
+                  color="#94a3b8"
+                  iconSize={12}
+                />
+                <h3>₦{lastWinAmount.toLocaleString()}</h3>
+              </span>
+              <div className="CardIcon"><History color="#9333ea" /></div>
+            </div>
+          </Grid>
 
-        {/* Last Win Card */}
-        <div className="Card" style={{ width: '100%', backgroundImage: "linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)" }}>
-          <span>
-            <ClickableInfoTooltip 
-              title={<p style={{ textTransform: "uppercase" }}>LAST WIN</p>} 
-              content={<Typography variant="caption">Amount from your most recent winning bet.</Typography>} 
-              color="#fff"
-              iconSize={12}
-            />
-            <h3>₦{lastWinAmount.toLocaleString()}</h3>
-          </span>
-          <div className="CardIcon"><History color="#fbc2eb" /></div>
-        </div>
+          {/* Withdrawn Card */}
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+            <div className="Card" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%', boxSizing: 'border-box', backgroundImage: "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)" }}>
+              <span>
+                <ClickableInfoTooltip 
+                  title={<p style={{ textTransform: "uppercase" }}>WITHDRAWN</p>} 
+                  content={<Typography variant="caption">Total returns or withdrawals from your bankroll.</Typography>} 
+                  color="#94a3b8"
+                  iconSize={12}
+                />
+                <h3>₦{totalReturn.toLocaleString()}</h3>
+              </span>
+              <div className="CardIcon"><Landmark color="#2563eb" /></div>
+            </div>
+          </Grid>
 
-        {/* Withdrawn Card */}
-        <div className="Card" style={{ width: '100%', backgroundImage: "radial-gradient(circle 248px at center, #16d9e3 0%, #30c7ec 47%, #46aef7 100%)" }}>
-          <span>
-            <ClickableInfoTooltip 
-              title={<p style={{ textTransform: "uppercase" }}>WITHDRAWN</p>} 
-              content={<Typography variant="caption">Total returns or withdrawals from your bankroll.</Typography>} 
-              color="#fff"
-              iconSize={12}
-            />
-            <h3>₦{totalReturn.toLocaleString()}</h3>
-          </span>
-          <div className="CardIcon"><Landmark color="#46aef7" /></div>
-        </div>
+          {/* Money Lost Since Last Win Card */}
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+            <div className="Card" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%', boxSizing: 'border-box', backgroundImage: "linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%)" }}>
+              <span>
+                <ClickableInfoTooltip 
+                  title={<p style={{ textTransform: "uppercase" }}>MONEY LOST SINCE LAST WIN</p>} 
+                  content={<Typography variant="caption">Money lost since the most recent win.</Typography>} 
+                  color="#94a3b8"
+                  iconSize={12}
+                />
+                <h3>₦{moneyLostSinceLastWin.toLocaleString()}</h3>
+              </span>
+              <div className="CardIcon"><Scissors color="#e11d48" /></div>
+            </div>
+          </Grid>
 
-        {/* Money Lost Since Last Win Card */}
-        <div className="Card" style={{ width: '100%', backgroundImage: "linear-gradient(120deg, #a6c0fe 0%, #f68084 100%)" }}>
-          <span>
-            <ClickableInfoTooltip 
-              title={<p style={{ textTransform: "uppercase" }}>MONEY LOST SINCE LAST WIN</p>} 
-              content={<Typography variant="caption">Money lost since the most recent win.</Typography>} 
-              color="#fff"
-              iconSize={12}
-            />
-            <h3>₦{moneyLostSinceLastWin.toLocaleString()}</h3>
-          </span>
-          <div className="CardIcon"><Scissors color="#f68084" /></div>
-        </div>
+          {/* Highest Amount Won Card */}
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+            <div className="Card" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%', boxSizing: 'border-box', backgroundImage: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)" }}>
+              <span>
+                <ClickableInfoTooltip 
+                  title={<p style={{ textTransform: "uppercase" }}>HIGHEST AMOUNT WON</p>} 
+                  content={<Typography variant="caption">Largest single win amount observed.</Typography>} 
+                  color="#94a3b8"
+                  iconSize={12}
+                />
+                <h3>₦{maxWin.toLocaleString()}</h3>
+              </span>
+              <div className="CardIcon"><Trophy color="#d97706" /></div>
+            </div>
+          </Grid>
 
-        {/* Highest Amount Won Card */}
-        <div className="Card" style={{ width: '100%', backgroundImage: "linear-gradient(120deg, #f6d365 0%, #fda085 100%)" }}>
-          <span>
-            <ClickableInfoTooltip 
-              title={<p style={{ textTransform: "uppercase" }}>HIGHEST AMOUNT WON</p>} 
-              content={<Typography variant="caption">Largest single win amount observed.</Typography>} 
-              color="#fff"
-              iconSize={12}
-            />
-            <h3>₦{maxWin.toLocaleString()}</h3>
-          </span>
-          <div className="CardIcon"><Trophy color="#ffd700" /></div>
-        </div>
+          {/* Win Rate Ratio Card */}
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+            <div className="Card" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%', boxSizing: 'border-box', backgroundImage: "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)" }}>
+              <span>
+                <ClickableInfoTooltip 
+                  title={<p style={{ textTransform: "uppercase" }}>WIN TO LOSS RATIO</p>} 
+                  content={<Typography variant="caption">Ratio of wins to losses.</Typography>} 
+                  color="#94a3b8"
+                  iconSize={12}
+                />
+                <h3>{losses > 0 ? (wins / losses).toFixed(2) : wins}</h3>
+              </span>
+              <div className="CardIcon"><Scale color="#16a34a" /></div>
+            </div>
+          </Grid>
 
-        {/* Win Rate Ratio Card */}
-        <div className="Card" style={{ width: '100%', backgroundImage: "linear-gradient(120deg, #d4fc79 0%, #96e6a1 100%)" }}>
-          <span>
-            <ClickableInfoTooltip 
-              title={<p style={{ textTransform: "uppercase" }}>WIN TO LOSS RATIO</p>} 
-              content={<Typography variant="caption">Ratio of wins to losses.</Typography>} 
-              color="#fff"
-              iconSize={12}
-            />
-            <h3>{losses > 0 ? (wins / losses).toFixed(2) : wins}</h3>
-          </span>
-          <div className="CardIcon"><Scale color="#d4fc79" /></div>
-        </div>
+          {/* Kelly Criterion Card */}
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+            <div className="Card" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%', boxSizing: 'border-box', backgroundImage: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)" }}>
+              <span>
+                <ClickableInfoTooltip 
+                  title={<p style={{ textTransform: "uppercase" }}>KELLY CRITERION</p>} 
+                  content={<Typography variant="caption">Optimal fraction to stake given edge and odds.</Typography>} 
+                  color="#94a3b8"
+                  iconSize={12}
+                />
+                <h3>N/A</h3>
+              </span>
+              <div className="CardIcon"><Calculator color="#4f46e5" /></div>
+            </div>
+          </Grid>
 
-        {/* Kelly Criterion Card */}
-        <div className="Card" style={{ width: '100%', backgroundImage: "linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)" }}>
-          <span>
-            <ClickableInfoTooltip 
-              title={<p style={{ textTransform: "uppercase" }}>KELLY CRITERION</p>} 
-              content={<Typography variant="caption">Optimal fraction to stake given edge and odds.</Typography>} 
-              color="#fff"
-              iconSize={12}
-            />
-            <h3>N/A</h3>
-          </span>
-          <div className="CardIcon"><Calculator color="#e0c3fc" /></div>
-        </div>
-
-        {/* Odds Card */}
-        <div className="Card" style={{ width: '100%', backgroundImage: "linear-gradient(to left bottom, #051937, #004d7a, #008793, #00bf72, #a8eb12)" }}>
-          <span>
-            <ClickableInfoTooltip 
-              title={<p style={{ textTransform: "uppercase" }}>HIGHEST ODDS WON</p>} 
-              content={<Typography variant="caption">Highest odds among your winning bets.</Typography>} 
-              color="#fff"
-              iconSize={12}
-            />
-            <h3>{highestWonOdds > 0 ? highestWonOdds.toFixed(2) : '0.00'}</h3>
-          </span>
-          <div className="CardIcon"><Percent color="#f6d365" /></div>
-        </div>
+          {/* Odds Card */}
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+            <div className="Card" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%', boxSizing: 'border-box', backgroundImage: "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)" }}>
+              <span>
+                <ClickableInfoTooltip 
+                  title={<p style={{ textTransform: "uppercase" }}>HIGHEST ODDS WON</p>} 
+                  content={<Typography variant="caption">Highest odds among your winning bets.</Typography>} 
+                  color="#94a3b8"
+                  iconSize={12}
+                />
+                <h3>{highestWonOdds > 0 ? highestWonOdds.toFixed(2) : '0.00'}</h3>
+              </span>
+              <div className="CardIcon"><Percent color="#475569" /></div>
+            </div>
+          </Grid>
+        </Grid>
       </Box>
 
       {/* --- RESTORED CHARTS SECTION --- */}
@@ -593,13 +702,24 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
           <Box sx={{ mb: 2, ml: 2 }}>
             <ClickableInfoTooltip 
               title={<p style={{ marginBottom: "2vmin", fontWeight: "600", color: "#fff", fontSize: isMobile ? "14px" : "16px", textTransform: "uppercase" }}>Profit Line Chart</p>} 
-              content={<Typography variant="caption">Net performance over time (Cumulative P&L).</Typography>} 
+              content={
+                <Box sx={{ p: 1 }}>
+                  <Typography variant="caption" display="block">Net performance over time (Cumulative P&L).</Typography>
+                  <BlockMath math={"\\text{Cumulative}_{t} = \\sum_{i=1}^{t} (\\text{Return}_i - \\text{Stake}_i)"} />
+                </Box>
+              } 
               color="#fff"
             />
           </Box>
             <ResponsiveContainer width="100%" height={isMobile ? 200 : 250}>
               <LineChart data={cumulativePLData.length > 0 ? cumulativePLData : [{ name: 'No Data', value: 0 }]} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-                <Line type="monotone" dataKey="value" stroke="#ffffff" strokeWidth={isMobile ? 2 : 3} dot={false} />
+                <defs>
+                  <linearGradient id="colorCum" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset={offC} stopColor="#4CAF50" stopOpacity={1}/>
+                    <stop offset={offC} stopColor="#F44336" stopOpacity={1}/>
+                  </linearGradient>
+                </defs>
+                <Line type="monotone" dataKey="value" stroke="url(#colorCum)" strokeWidth={isMobile ? 2 : 3} dot={false} />
                 <CartesianGrid stroke="#ffffff" strokeDasharray="5 5" opacity={0.3} vertical={false} />
                 <XAxis
                   dataKey="name"
@@ -607,12 +727,16 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
                   axisLine={{ stroke: '#ffffff', opacity: 0.5 }}
                   tickLine={{ stroke: '#ffffff', opacity: 0.5 }}
                   minTickGap={30}
-                />
+                >
+                  <Label value="Time" offset={-5} position="insideBottom" style={{ fontSize: isMobile ? 10 : 12, fill: '#ffffff', opacity: 0.8 }} />
+                </XAxis>
                 <YAxis
                   tick={{ fill: '#ffffff', fontSize: isMobile ? 10 : 12 }}
                   axisLine={{ stroke: '#ffffff', opacity: 0.5 }}
                   tickLine={{ stroke: '#ffffff', opacity: 0.5 }}
-                />
+                >
+                  <Label value="Cumulative Profit (₦)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: isMobile ? 10 : 12, fill: '#ffffff', opacity: 0.8 }} />
+                </YAxis>
                 <Tooltip
                   labelFormatter={(label, items) => {
                     const item = items?.[0]?.payload;
@@ -637,16 +761,33 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
             </ResponsiveContainer>
           </div>
 
-      {/* Donut Chart */}
-      <ClickableInfoTooltip 
-        title="" 
-        content={<Typography variant="caption">Distribution of wins, losses, and draws.</Typography>} 
-      >
-        <div id="Donut" style={{ fontFamily: "Playfair Display", borderRadius: "6px", textTransform: "uppercase", width: "100%", maxWidth: "2000px", padding: "0vmin", margin: "auto", position: "relative", backgroundImage: "linear-gradient(to right, #4facfe 0%, #00f2fe 100%)" }}>
+
+        <div id="Donut" style={{ 
+          marginBottom: "3vmin", 
+          fontFamily: "Playfair Display", 
+          paddingTop: "3vmin", 
+          borderRadius: "6px", 
+          backgroundImage: "linear-gradient(to right, #4facfe 0%, #00f2fe 100%)", 
+          height: "auto", 
+          minHeight: "300px", 
+          width: "100%", 
+          maxWidth: "none", 
+          overflowX: "hidden", 
+          overflowY: "hidden", 
+          padding: "20px", 
+          boxSizing: "border-box",
+          position: "relative",
+          textTransform: "uppercase"
+        }}>
           <Box sx={{ mb: 2, ml: 2, pt: 2 }}>
             <ClickableInfoTooltip 
               title={<p style={{ marginBottom: "2vmin", fontWeight: "600", color: "#fff", fontSize: isMobile ? "14px" : "16px", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>Win/Loss Distribution</p>} 
-              content={<Typography variant="caption">Percentage breakdown of game outcomes.</Typography>} 
+              content={
+                <Box sx={{ p: 1 }}>
+                  <Typography variant="caption" display="block">Percentage breakdown of game outcomes.</Typography>
+                  <BlockMath math={"P(Outcome) = \\frac{\\sum I(O_i = Outcome)}{N} \\times 100\\%"} />
+                </Box>
+              } 
               color="#fff"
             />
           </Box>
@@ -666,49 +807,51 @@ const OverviewTab = ({ bets = [], isSyncing = false }) => {
                 </linearGradient>
               </defs>
             </svg>
-            <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: "Wins", value: wins },
-                    { name: "Losses", value: losses },
-                    { name: "Draws", value: draws }
-                  ].filter(d => d.value > 0)}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={isMobile ? 50 : 70}
-                  outerRadius={isMobile ? 80 : 100}
-                  paddingAngle={2}
-                  cornerRadius={2}
-                  dataKey="value"
-                >
-                  <Cell fill="url(#winGradient)" />
-                  <Cell fill="url(#lossGradient)" />
-                  <Cell fill="url(#drawGradient)" />
-                </Pie>
-                <Tooltip contentStyle={{ fontSize: '12px' }} />
-                <Legend 
-                  wrapperStyle={{ paddingTop: '10px' }}
-                  formatter={(value) => <span style={{ fontSize: isMobile ? '10px' : '12px' }}>{value}</span>}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -40%)",
-              textAlign: "center",
-              fontWeight: "bold",
-              fontSize: isMobile ? "12px" : "14px",
-              textTransform: "uppercase",
-              color: "#333"
-            }}>
-              <div>Games</div>
-              <div style={{ fontSize: isMobile ? "16px" : "20px", fontWeight: "bold", color: "#000" }}>{totalBets.toLocaleString()}</div>
+            <div style={{ position: "relative", width: "100%", height: isMobile ? 250 : 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: "Wins", value: wins },
+                      { name: "Losses", value: losses },
+                      { name: "Draws", value: draws }
+                    ].filter(d => d.value > 0)}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={isMobile ? 50 : 70}
+                    outerRadius={isMobile ? 80 : 100}
+                    paddingAngle={2}
+                    cornerRadius={2}
+                    dataKey="value"
+                  >
+                    <Cell fill="url(#winGradient)" />
+                    <Cell fill="url(#lossGradient)" />
+                    <Cell fill="url(#drawGradient)" />
+                  </Pie>
+                  <Tooltip contentStyle={{ fontSize: '12px' }} />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '10px' }}
+                    formatter={(value) => <span style={{ fontSize: isMobile ? '10px' : '12px' }}>{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, calc(-50% - 18px))",
+                textAlign: "center",
+                fontWeight: "bold",
+                fontSize: isMobile ? "12px" : "14px",
+                textTransform: "uppercase",
+                color: "#333",
+                pointerEvents: "none"
+              }}>
+                <div>Games</div>
+                <div style={{ fontSize: isMobile ? "16px" : "20px", fontWeight: "bold", color: "#000" }}>{totalBets.toLocaleString()}</div>
+              </div>
             </div>
           </div>
-        </ClickableInfoTooltip>
 
         <div style={{
           marginTop: "3vmin",
